@@ -27,8 +27,8 @@ class AddForeignKeysToFriendsTable extends Migration
     public function down()
     {
         Schema::table('friends', function (Blueprint $table) {
-            $table->dropForeign('friends_users_user1_id_foreign');
-            $table->dropForeign('friends_users_user2_id_foreign');
+            $table->dropForeign('friends_user1_id_foreign');
+            $table->dropForeign('friends_user2_id_foreign');
         });
     }
 }

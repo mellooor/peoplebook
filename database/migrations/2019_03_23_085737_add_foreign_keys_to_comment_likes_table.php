@@ -27,8 +27,8 @@ class AddForeignKeysToCommentLikesTable extends Migration
     public function down()
     {
         Schema::table('comment_likes', function (Blueprint $table) {
-            $table->dropForeign('comment_likes_users_user_id_foreign');
-            $table->dropForeign('comment_likes_comments_comment_id_foreign');
+            $table->dropForeign('comment_likes_user_id_foreign');
+            $table->dropForeign('comment_likes_comment_id_foreign');
         });
     }
 }

@@ -27,8 +27,8 @@ class AddForeignKeysToStatusLikesTable extends Migration
     public function down()
     {
         Schema::table('status_likes', function (Blueprint $table) {
-            $table->dropForeign('status_likes_users_user_id_foreign');
-            $table->dropForeign('status_likes_statuses_status_id_foreign');
+            $table->dropForeign('status_likes_user_id_foreign');
+            $table->dropForeign('status_likes_status_id_foreign');
         });
     }
 }

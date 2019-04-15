@@ -19,7 +19,7 @@ class CreateUsersTable extends Migration
             $table->string('last_name');
             $table->date('date_of_birth');
             $table->string('profile_picture');
-            $table->bigInteger('relationship_type_id')->unsigned();
+            $table->bigInteger('relationship_type_id')->unsigned()->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->date('date_created');

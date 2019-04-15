@@ -28,9 +28,9 @@ class AddForeignKeysToEventsTable extends Migration
     public function down()
     {
         Schema::table('events', function (Blueprint $table) {
-            $table->dropForeign('events_users_user1_id_foreign');
-            $table->dropForeign('events_users_user2_id_foreign');
-            $table->dropForeign('events_event_types_event_type_id_foreign');
+            $table->dropForeign('events_user1_id_foreign');
+            $table->dropForeign('events_user2_id_foreign');
+            $table->dropForeign('events_event_type_id_foreign');
         });
     }
 }

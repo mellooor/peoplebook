@@ -27,8 +27,8 @@ class AddForeignKeysToStatusCommentsTable extends Migration
     public function down()
     {
         Schema::table('status_comments', function (Blueprint $table) {
-            $table->dropForeign('status_comments_users_author_id_foreign');
-            $table->dropForeign('status_comments_statuses_status_id_foreign');
+            $table->dropForeign('status_comments_author_id_foreign');
+            $table->dropForeign('status_comments_status_id_foreign');
         });
     }
 }

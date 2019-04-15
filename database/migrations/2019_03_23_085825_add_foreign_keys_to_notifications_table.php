@@ -27,8 +27,8 @@ class AddForeignKeysToNotificationsTable extends Migration
     public function down()
     {
         Schema::table('notifications', function (Blueprint $table) {
-            $table->dropForeign('notifications_users_user_id_foreign');
-            $table->dropForeign('notifications_notification_types_notification_type_id_foreign');
+            $table->dropForeign('notifications_user_id_foreign');
+            $table->dropForeign('notifications_notification_type_id_foreign');
         });
     }
 }

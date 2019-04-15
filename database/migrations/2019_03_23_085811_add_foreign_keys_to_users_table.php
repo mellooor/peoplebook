@@ -27,8 +27,8 @@ class AddForeignKeysToUsersTable extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign('users_relationship_types_relationship_type_id_foreign');
-            $table->dropForeign('users_privacy_types_privacy_type_id_foreign');
+            $table->dropForeign('users_relationship_type_id_foreign');
+            $table->dropForeign('users_privacy_type_id_foreign');
         });
     }
 }

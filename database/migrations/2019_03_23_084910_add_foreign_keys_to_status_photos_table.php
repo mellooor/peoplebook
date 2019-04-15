@@ -26,7 +26,7 @@ class AddForeignKeysToStatusPhotosTable extends Migration
     public function down()
     {
         Schema::table('status_photos', function (Blueprint $table) {
-            $table->dropForeign('status_photos_statuses_status_id_foreign');
+            $table->dropForeign('status_photos_status_id_foreign');
         });
     }
 }
