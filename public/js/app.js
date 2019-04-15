@@ -35,3 +35,9 @@ editStatusBtnsArray.forEach(function(editStatusBtn) {
 
    });
 });
+
+document.getElementById('search-term').addEventListener('keypress', function(e) {
+    if (e.key === "Enter") {
+        searchGet();
+    }
+});

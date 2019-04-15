@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\User;
+use App\Status;
 
 class pagesController extends Controller
 {
@@ -27,7 +29,24 @@ class pagesController extends Controller
     }
 
     public function search($term) {
-        return view('search')->with('term', $term);
+        $userMatches = User::query()
+            ->where('first_name', 'LIKE', "%{$term}%")
+            ->orWhere('last_name', 'LIKE', "%{$term}%")
+            ->get();
+
+        $statusMatches = Status::query()
+            ->where('content', 'LIKE', "%{$term}%")
+            ->get();
+
+//        $pageMatches = ...
+
+        $matchesArray = [
+            'term' => $term,
+            'users' => $userMatches,
+            'statuses' => $statusMatches
+        ];
+
+        return view('search')->with('results', $matchesArray);
     }
 
     public function userMoreInfo($id) {

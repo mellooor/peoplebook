@@ -13,50 +13,39 @@
             <br>
             <div class="tab-content" id="nav-tabContent">
                 <div class="tab-pane fade show active" id="nav-statuses" role="tabpanel" aria-labelledby="nav-statuses-tab">
-                    <h2>2 Statuses found for "{{ $term }}"</h2>
-                    <br>
-                    <div class="card status">
-                        <div class="card-header">
-                            <a href="user.php"><img src="../images/default_profile_picture-25x25.png"/> User 3</a>
-                        </div>
-                        <div class="card-body">
-                            <p class="card-text">So Random!</p>
-                            <div class="row">
-                                0 Likes
-                                1 Comment
+                    <h2>{{ count($results["statuses"]) }} Statuses found for "{{ $results["term"] }}"</h2>
+
+                    @foreach ($results["statuses"] as $status)
+                        <br>
+                        <div class="card status">
+                            <div class="card-header">
+                                <a href="{{ route('user', $status->author_id) }}"><img src="../images/default_profile_picture-25x25.png"/> User 3</a>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">{{ $status->content }}</p>
+                                <div class="row">
+                                    0 Likes
+                                    1 Comment
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <br>
-                    <div class="card status">
-                        <div class="card-header">
-                            <a href="user.php"><img src="../images/default_profile_picture-25x25.png"/> User 2</a>
-                        </div>
-                        <div class="card-body">
-                            <p class="card-text">Home.</p>
-                            <a href="#"><img src="../images/sky-earth-galaxy-universe.jpg"/></a>
-                            <div class="row">
-                                4 Likes
-                                3 Comments
-                            </div>
-                            <div class="row">
-                                <a href="#">Liked</a>
-                            </div>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
                 <div class="tab-pane fade" id="nav-users" role="tabpanel" aria-labelledby="nav-users-tab">
-                    <h2>1 User found for "{{ $term }}"</h2>
-                    <br>
-                    <div class="card user">
-                        <div class="card-body d-flex">
-                            <button class="btn"><a href="user.php"><img src="../images/default_profile_picture-50x50.png"/>User 2</a></button>
-                            <button class="btn btn-primary ml-auto my-auto">Add</button>
+                    <h2>{{ count($results["users"]) }} User found for "{{ $results["term"] }}"</h2>
+
+                    @foreach($results["users"] as $user)
+                        <br>
+                        <div class="card user">
+                            <div class="card-body d-flex">
+                                <button class="btn"><a href="{{ route('user', $user->id) }}"><img src="../images/default_profile_picture-50x50.png"/>{{ $user->first_name }} {{ $user->last_name }}</a></button>
+                                <button class="btn btn-primary ml-auto my-auto">Add</button>
+                            </div>
                         </div>
-                    </div>
+                    @endforeach
                 </div>
                 <div class="tab-pane fade" id="nav-pages" role="tabpanel" aria-labelledby="nav-pages-tab">
-                    <h2>3 Pages found for "{{ $term }}"</h2>
+                    <h2>3 Pages found for "{{ $results["term"] }}"</h2>
                     <br>
                     <div class="card page">
                         <div class="card-body d-flex">
