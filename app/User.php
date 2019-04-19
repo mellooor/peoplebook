@@ -48,7 +48,11 @@ class User extends Authenticatable
     /*
      * Get the friends/friendRequests for a user.
      */
-    public function users() {
-        return $this->hasMany('App\Friendship', 'user2_id');
+    public function friendRequestUsers1() {
+        return $this->hasMany('App\FriendRequest', 'user1_id');
+    }
+
+    public function friendRequestUsers2() {
+        return $this->hasMany('App\FriendRequest', 'user2_id');
     }
 }
