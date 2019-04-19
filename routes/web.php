@@ -16,7 +16,7 @@ Route::get('/', 'HomeController@index')->name('home');
 Auth::routes();
 
 Route::get('/user/{id?}', 'PagesController@user')->name('user')->middleware('auth');
-Route::get('/friend-requests', 'PagesController@friendRequests')->name('friendRequests')->middleware('auth');
+Route::get('/friend-requests', 'FriendshipsController@friendRequestsIndex')->name('friendRequests')->middleware('auth');
 Route::get('/settings', 'PagesController@settings')->name('settings')->middleware('auth');
 Route::get('/friends', 'PagesController@friends')->name('friends')->middleware('auth');
 Route::get('/my-friends', 'PagesController@friends')->name('my-friends')->middleware('auth');

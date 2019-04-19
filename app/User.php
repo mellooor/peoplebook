@@ -44,4 +44,11 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    /*
+     * Get the friends/friendRequests for a user.
+     */
+    public function users() {
+        return $this->hasMany('App\Friendship', 'user2_id');
+    }
 }
