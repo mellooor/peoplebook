@@ -23,7 +23,7 @@
                     <a class="nav-link" href="{{ route('notifications') }}">Notifications <span class="badge badge-pill badge-danger">1</span></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('friendRequests') }}">Friend Requests
+                    <a class="nav-link" href="{{ route('friend-requests') }}">Friend Requests
                         @if ($navbarData['friend-request-count'] > 0)
                             <span id="friend-request-count" class="badge badge-pill badge-danger">{{ $navbarData['friend-request-count'] }}</span>
                         @else

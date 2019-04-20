@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\User;
+use App\FriendRequest;
+use App\Friendship;
 
 class FriendRequestsController extends Controller
 {
@@ -34,29 +36,79 @@ class FriendRequestsController extends Controller
         return view('friend-requests')->with('requests', $requests);
     }
 
-    public function destroy($targetUserID)
+    public function decline(Request $request)
     {
         $currentUserID = \Auth::user()->id;
 
-        $friendRequests = Friendship::where(function ($query) use ($targetUserID, $currentUserID) {
-            $query->where('user1_id', '=', $currentUserID)
-                ->where('user2_id', '=', $targetUserID);
-        })->orWhere(function ($query) use ($targetUserID, $currentUserID) {
-            $query->where('user1_id', '=', $targetUserID)
-                ->where('user2_id', '=', $currentUserID);
-        })->get();
+        $request->validate([
+            'friend-request-id' => 'integer|required',
+            'target-user-id' => 'integer|required'
+        ]);
 
-        if ($friendRequests) {
-            foreach ($friendRequests as $friendRequest) {
+        $targetFriendRequestID = intval($request->input('friend-request-id'));
+        $targetUserID = intval($request->input('target-user-id'));
+
+        /*
+         * If the target friend request ID matches an existing id in the friend requests DB table...
+         */
+        if ($friendRequest = FriendRequest::find($targetFriendRequestID)) {
+            /*
+             * If the supplied user IDs match the user IDs in the friend request record from the DB table...
+             */
+            if ($friendRequest->userIDsMatch($currentUserID, $targetUserID)) {
                 $friendRequest->delete();
+                return redirect()->back()->with('declined', 'Friend Request Declined');
+            } else {
+                return redirect()->back();
             }
+        } else {
+            return redirect()->back();
         }
     }
 
-    public function acceptFriendRequest($userID) {
+    public function accept(Request $request) {
         $currentUserID = \Auth::user()->id;
 
-        $friendRequests = User::find($currentUserID)->users;
+        $request->validate([
+           'friend-request-id' => 'integer|required',
+           'target-user-id' => 'integer|required'
+        ]);
+
+        $targetFriendRequestID = intval($request->input('friend-request-id'));
+        $targetUserID = intval($request->input('target-user-id'));
+
+        /*
+         * If the target friend request ID matches an existing id in the friend requests DB table...
+         */
+        if ($friendRequest = FriendRequest::find($targetFriendRequestID)) {
+            /*
+             * If the supplied user IDs match the user IDs in the friend request record from the DB table...
+             */
+            if ($friendRequest->userIDsMatch($currentUserID, $targetUserID)) {
+                $friendshipExists = Friendship::exists($currentUserID, $targetUserID);
+
+                /*
+                 * If the friendship doesn't already exist, create a new friendship; otherwise, don't (preventing a duplicate record)
+                 */
+                if (!$friendshipExists) {
+                    $friendship = new Friendship();
+                    $friendship->user1_id = $currentUserID;
+                    $friendship->user2_id = $targetUserID;
+                    $friendship->created_at = date("Y-m-d");
+                    if ($friendship->save()) {
+                        $friendRequest->delete();
+                        return redirect()->back()->with('accepted', 'Friend Added');
+                    }
+                } else if ($friendshipExists) {
+                    $friendRequest->delete();
+                    return redirect()->back()->with('accepted', 'You Have Already Added This Person as a Friend');
+                }
+            } else {
+                return redirect()->back();
+            }
+        } else {
+            return redirect()->back();
+        }
     }
 
     public function store($targetUserID) {
@@ -68,6 +120,11 @@ class FriendRequestsController extends Controller
         $friendRequest->save();
     }
 
+    /*
+     * Returns the number of friend requests for the current user.
+     *
+     * @return integer The number of friend requests.
+     */
     public static function count() {
         $currentUserID = \Auth::user()->id;
 
