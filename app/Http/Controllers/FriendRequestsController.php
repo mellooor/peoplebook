@@ -12,7 +12,6 @@ class FriendRequestsController extends Controller
 
         $friendRequests = User::find($currentUserID)->friendRequestUsers1;
         $friendRequests = $friendRequests->merge(User::find($currentUserID)->friendRequestUsers2);
-        //array_push($friendRequests, User::find($currentUserID)->friendRequestUsers2);
         $requests = [];
 
         /*
@@ -67,5 +66,26 @@ class FriendRequestsController extends Controller
         $friendRequest->user1_id = $currentUserID;
         $friendRequest->user2_id = $targetUserID;
         $friendRequest->save();
+    }
+
+    public static function count() {
+        $currentUserID = \Auth::user()->id;
+
+        $friendRequests = User::find($currentUserID)->friendRequestUsers1;
+        $friendRequests = $friendRequests->merge(User::find($currentUserID)->friendRequestUsers2);
+        $count = 0;
+
+        /*
+         * For each friend request, store the user of the friend request that isn't the current user in the targetUsersArray Array.
+         */
+        foreach ($friendRequests as $friendRequest) {
+            if ($friendRequest->user1_id === $currentUserID) {
+                $count++;
+            } else if ($friendRequest->user2_id === $currentUserID) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 }

@@ -41,3 +41,38 @@ document.getElementById('search-term').addEventListener('keypress', function(e) 
         searchGet();
     }
 });
+
+
+document.addEventListener('DOMContentLoaded', getFriendRequestCount());
+
+function getFriendRequestCount() {
+    var friendRequestCountElement;
+
+    friendRequestCountElement = document.getElementById('friend-request-count');
+
+    if (friendRequestCountElement) {
+        httpRequest = new XMLHttpRequest();
+
+        httpRequest.onreadystatechange = function() {
+            if (httpRequest.readyState === XMLHttpRequest.DONE) {
+                if (httpRequest.status === 200) {
+                     //friendRequestCountElement.innerText = httpRequest.responseText;
+
+                     if (parseInt(httpRequest.responseText) > 0) {
+                         //friendRequestCountElement.classList.remove('badge-info');
+                         //friendRequestCountElement.classList.add('badge-danger');
+                     }
+                } else {
+                    // There was a problem with the request.
+                    // For example, the response may have a 404 (Not Found)
+                    // or 500 (Internal Server Error) response code.
+                }
+            } else {
+                // Not ready yet.
+            }
+        }
+
+        httpRequest.open('GET', 'http://dev.peoplebook.com/friend-requests/count', true);
+        httpRequest.send();
+    }
+}

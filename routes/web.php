@@ -25,6 +25,7 @@ Route::get('/search/{term}', 'PagesController@search')->name('search')->middlewa
 Route::get('/user/{id}/more-info', 'PagesController@userMoreInfo')->name('user-more-info')->middleware('auth');
 Route::get('status/{id}', 'PagesController@status')->name('status')->middleware('auth');
 Route::get('/user/{id}/photos', 'PagesController@userPhotos')->name('photos')->middleware('auth');
+Route::get('/friend-requests/count', 'FriendRequestsController@count')->name('count')->middleware('auth');
 
 
 Route::redirect('/home', '/');
