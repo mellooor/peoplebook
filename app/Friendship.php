@@ -8,6 +8,14 @@ class Friendship extends Model
 {
     public $timestamps = false;
 
+    public function user1() {
+        return $this->belongsTo('App\User', 'user1_id');
+    }
+
+    public function user2() {
+        return $this->belongsTo('App\User', 'user2_id');
+    }
+
     /*
      * Checks to see whether a friendship between 2 users exists.
      *
@@ -25,5 +33,9 @@ class Friendship extends Model
         })->get();
 
         return count($friendship);
+    }
+
+    public function userIDsMatch($user1ID, $user2ID) {
+        return (($this->user1_id === $user1ID && $this->user2_id === $user2ID) || ($this->user1_id === $user2ID && $this->user2_id === $user1ID));
     }
 }

@@ -76,3 +76,43 @@ function getFriendRequestCount() {
         httpRequest.send();
     }
 }
+
+(function() {
+    window.onload = function() {
+        var removeFriendBtnElements, removeFriendBtnElementsArray, removeFriendConfirmModal, removeFriendForm, removeFriendFormFriendshipIDInput, removeFriendFormTargetUserIDInput;
+
+        removeFriendBtnElements = document.querySelectorAll('.remove-friend-btn');
+        removeFriendBtnElementsArray = Array.prototype.slice.call(removeFriendBtnElements);
+        removeFriendConfirmModal = document.getElementById('remove-friend-confirm');
+        removeFriendForm = document.getElementById('remove-friend-form');
+        removeFriendFormFriendshipIDInput = removeFriendForm.querySelector('input[name="friendship-id"]');
+        removeFriendFormTargetUserIDInput = removeFriendForm.querySelector('input[name="target-user-id"]');
+
+        removeFriendBtnElementsArray.forEach(function(removeFriendBtnElement) {
+            removeFriendBtnElement.addEventListener('click', function() {
+                var removeFriendBtnElementParent, removeFriendUserLink, removeFriendUserName, friendshipID, targetUserID, removeFriendModalBody, modalTextElement, modalTextElementContent;
+                // Set Modal Body Text.
+                removeFriendBtnElementParent = removeFriendBtnElement.closest('.card-body');
+                removeFriendUserLink = removeFriendBtnElementParent.querySelector('.user-link');
+                removeFriendUserName = removeFriendUserLink.innerText;
+                removeFriendModalBody = removeFriendConfirmModal.querySelector('.modal-body');
+                // Clear the current contents to prevent duplicate text on multiple modal calls.
+                if (removeFriendModalBody.firstChild) {
+                    while (removeFriendModalBody.firstChild) {
+                        removeFriendModalBody.removeChild(removeFriendModalBody.firstChild);
+                    }
+                }
+                modalTextElement = document.createElement("h2");
+                modalTextElementContent = document.createTextNode("Are you sure you want to remove " + removeFriendUserName + " as a friend?");
+                modalTextElement.appendChild(modalTextElementContent);
+                removeFriendModalBody.insertAdjacentElement('afterbegin', modalTextElement);
+
+                // Set Modal Hidden Input Values.
+                friendshipID = parseInt(removeFriendBtnElement.dataset.friendshipId);
+                targetUserID = parseInt(removeFriendBtnElement.dataset.targetUserId);
+                removeFriendFormFriendshipIDInput.value = friendshipID;
+                removeFriendFormTargetUserIDInput.value = targetUserID;
+            })
+        });
+    }
+})();
