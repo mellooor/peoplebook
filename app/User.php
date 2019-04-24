@@ -63,4 +63,8 @@ class User extends Authenticatable
     public function friendshipUsers2() {
         return $this->hasMany('App\Friendship', 'user2_id');
     }
+
+    public function statuses() {
+        return $this->hasMany('App\Status', 'author_id');
+    }
 }

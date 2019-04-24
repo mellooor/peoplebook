@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Status;
+use App\StatusLike;
 
 class StatusLikesController extends Controller
 {
@@ -17,16 +19,6 @@ class StatusLikesController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -34,41 +26,26 @@ class StatusLikesController extends Controller
      */
     public function store(Request $request)
     {
-        //
-    }
+        $currentUserID = \Auth::user()->id;
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
+        $request->validate([
+            'status-id' => 'integer|required'
+        ]);
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
+        $statusID = intval($request->input('status-id'));
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
+        if (Status::find($statusID)) {
+            $statusLike = new StatusLike();
+            $statusLike->user_id = $currentUserID;
+            $statusLike->status_id = $statusID;
+            if ($statusLike->save()) {
+                return redirect()->back();
+            } else {
+                return redirect()->back()->with('not-liked', 'An Error Occurred when Liking the Status. Please Try Again.');
+            }
+        } else {
+            return redirect()->back();
+        }
     }
 
     /**
@@ -77,8 +54,28 @@ class StatusLikesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request)
     {
-        //
+        $currentUserID = \Auth::user()->id;
+
+        $request->validate([
+            'status-like-id' => 'integer|required'
+        ]);
+
+        $statusLikeID = intval($request->input('status-like-id'));
+
+        if ($statusLike = StatusLike::find($statusLikeID)) {
+            if ($statusLike->user_id === $currentUserID) {
+                if ($statusLike->delete()) {
+                    return redirect()->back();
+                } else {
+                    return redirect()->back()->with('not-unliked', 'An Error Occured when Unliking the Status. Please try Again');
+                }
+            } else {
+                return redirect()->back();
+            }
+        } else {
+            return redirect()->back();
+        }
     }
 }

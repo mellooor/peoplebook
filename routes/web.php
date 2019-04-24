@@ -11,7 +11,7 @@
 |
 */
 
-Route::get('/', 'HomeController@index')->name('home');
+Route::get('/', 'StatusesController@index')->name('home');
 
 Auth::routes();
 
@@ -29,6 +29,13 @@ Route::get('/user/{id}/photos', 'PagesController@userPhotos')->name('photos')->m
 Route::get('/friend-requests/count', 'FriendRequestsController@count')->name('count')->middleware('auth');
 Route::post('/friend-requests/accept', 'FriendRequestsController@accept')->name('accept-friend-request')->middleware('auth');
 Route::delete('/friend-requests/decline', 'FriendRequestsController@decline')->name('decline-friend-request')->middleware('auth');
-
+Route::post('/status/create', 'StatusesController@store')->name('create-status')->middleware('auth');
+Route::delete('/status/delete', 'StatusesController@destroy')->name('delete-status')->middleware('auth');
+Route::put('/status/edit', 'StatusesController@update')->name('update-status')->middleware('auth');
+Route::post('/status/like', 'StatusLikesController@store')->name('like-status')->middleware('auth');
+Route::delete('status/unlike', 'StatusLikesController@destroy')->name('unlike-status')->middleware('auth');
+Route::post('/status/comment/add', 'StatusCommentsController@store')->name('add-comment')->middleware('auth');
+Route::put('/status/comment/edit', 'StatusCommentsController@update')->name('update-comment')->middleware('auth');
+Route::delete('/status/comment/delete', 'StatusCommentsController@destroy')->name('delete-comment')->middleware('auth');
 
 Route::redirect('/home', '/');

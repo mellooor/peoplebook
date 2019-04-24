@@ -8,15 +8,13 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form action="" method="post">
+                <form action="{{ route('create-status') }}" method="post" class="d-flex flex-column">
+                    @csrf
                     <div class="form-group">
-                        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+                        <textarea name="body" class="form-control" rows="3"></textarea>
                     </div>
+                    <button type="submit" class="btn btn-success ml-auto">Share</button>
                 </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-success">Share</button>
             </div>
         </div>
     </div>
