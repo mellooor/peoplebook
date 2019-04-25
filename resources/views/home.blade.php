@@ -74,8 +74,24 @@
                                                     <img src="../images/default_profile_picture-25x25.png"/>
                                                 </a>
                                                 <p class="card-text">{{ $comment->content }}</p>
-                                                <b>(1 like)</b>
-                                                <a href="#">Like</a>
+                                                <b>({{ count($comment->likes) }} like)</b>
+
+                                                @if ( $comment->likes->contains('user_id', $data['currentUserID']))
+                                                    <form action="{{ route('unlike-comment') }}" method="post">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <input type="hidden" name="comment-id" value="{{ $comment->id }}"/>
+                                                        <input type="hidden" name="comment-like-id" value="{{ $comment->likes->firstWhere('user_id', $data['currentUserID'])->id }}"/>
+                                                        <button type="submit" class="btn btn-link">Unlike</button>
+                                                    </form>
+                                                @else
+                                                    <form action="{{ route('like-comment') }}" method="post">
+                                                        @csrf
+                                                        <input type="hidden" name="comment-id" value="{{ $comment->id }}"/>
+                                                        <button type="submit" class="btn btn-link">Like</button>
+                                                    </form>
+                                                @endif
+
                                                 @if ($comment->author_id === $data['currentUserID'])
                                                     <button class="btn btn-link status-comment-edit-btn" data-toggle="modal" data-target="#status-comment-edit-modal" data-status-id="{{ $status->id }}" data-comment-id="{{ $comment->id }}">Edit</button>
                                                     <button class="btn btn-link status-comment-delete-btn" data-toggle="modal" data-target="#status-comment-delete-confirm" data-status-id="{{ $status->id }}" data-comment-id="{{ $comment->id }}">Delete</button>

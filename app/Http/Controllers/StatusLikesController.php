@@ -9,16 +9,6 @@ use App\StatusLike;
 class StatusLikesController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -34,14 +24,20 @@ class StatusLikesController extends Controller
 
         $statusID = intval($request->input('status-id'));
 
-        if (Status::find($statusID)) {
-            $statusLike = new StatusLike();
-            $statusLike->user_id = $currentUserID;
-            $statusLike->status_id = $statusID;
-            if ($statusLike->save()) {
-                return redirect()->back();
+        // If the status ID from the request points to an existing status from the statuses DB table.
+        if ($status = Status::find($statusID)) {
+            // If the user hasn't already liked the status
+            if (!$status->likes->contains('user_id', $currentUserID)) {
+                $statusLike = new StatusLike();
+                $statusLike->user_id = $currentUserID;
+                $statusLike->status_id = $statusID;
+                if ($statusLike->save()) {
+                    return redirect()->back();
+                } else {
+                    return redirect()->back()->with('not-liked', 'An Error Occurred when Liking the Status. Please Try Again.');
+                }
             } else {
-                return redirect()->back()->with('not-liked', 'An Error Occurred when Liking the Status. Please Try Again.');
+                return redirect()->back();
             }
         } else {
             return redirect()->back();

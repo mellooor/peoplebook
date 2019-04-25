@@ -37,5 +37,7 @@ Route::delete('status/unlike', 'StatusLikesController@destroy')->name('unlike-st
 Route::post('/status/comment/add', 'StatusCommentsController@store')->name('add-comment')->middleware('auth');
 Route::put('/status/comment/edit', 'StatusCommentsController@update')->name('update-comment')->middleware('auth');
 Route::delete('/status/comment/delete', 'StatusCommentsController@destroy')->name('delete-comment')->middleware('auth');
+Route::post('/status/comment/like', 'CommentLikesController@store')->name('like-comment')->middleware('auth');
+Route::delete('/status/comment/unlike', 'CommentLikesController@destroy')->name('unlike-comment')->middleware('auth');
 
 Route::redirect('/home', '/');
