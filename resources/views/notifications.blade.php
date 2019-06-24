@@ -18,7 +18,7 @@
                         </div>
                     </div>
                 </a>
-                <a href="{{ route('friendRequests') }}">
+                <a href="{{ route('friend-requests') }}">
                     <div class="card">
                         <div class="card-body">
                             <img src="images/default_profile_picture-25x25.png"/> User 5 sent you a friend request. <small>2 Months Ago</small>
