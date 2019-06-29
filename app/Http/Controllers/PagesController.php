@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\User;
 use App\Status;
+use Illuminate\Support\Facades\Auth;
 
 class pagesController extends Controller
 {
@@ -29,6 +30,8 @@ class pagesController extends Controller
     }
 
     public function search($term) {
+        $currentUser = User::find(Auth::user()->id);
+
         $userMatches = User::query()
             ->where('first_name', 'LIKE', "%{$term}%")
             ->orWhere('last_name', 'LIKE', "%{$term}%")
@@ -39,6 +42,11 @@ class pagesController extends Controller
             ->get();
 
 //        $pageMatches = ...
+
+
+        // Filter the search collections that are affected by privacy settings.
+        $userMatches = $currentUser->filterUsersFromCollection($userMatches);
+        $statusMatches = $currentUser->filterStatusesFromCollection($statusMatches);
 
         $matchesArray = [
             'term' => $term,

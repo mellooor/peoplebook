@@ -19,4 +19,19 @@ class Status extends Model
     public function comments() {
         return $this->hasMany('App\StatusComment', 'status_id');
     }
+
+    /*
+     * Verifies that a variable is a Status model.
+     *
+     * @param $sample - The variable that is to be verified.
+     *
+     * @return boolean - True/False dependent on whether the argument is a Status model.
+     */
+    public static function isStatusModel($sample) {
+        if (is_object($sample)) {
+            return (get_class($sample) === "App\Status");
+        } else {
+            return false;
+        }
+    }
 }
