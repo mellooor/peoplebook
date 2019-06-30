@@ -158,7 +158,7 @@ class User extends Authenticatable
                 if ($user->privacy_type_id === 1) {
                     return $user;
                 } elseif ($user->privacy_type_id === 2) {
-                    return in_array($user->id, $this->friendsOfFriendsIDs());
+                    return in_array($user->id, $this->friendAndFriendOfFriendIDs());
                 } elseif ($user->privacy_type_id === 3) {
                     return in_array($user->id, $this->getAllFriendIDs());
                 }
@@ -188,7 +188,7 @@ class User extends Authenticatable
                 if ($status->privacy_type_id === 1) {
                     return $status;
                 } elseif ($status->privacy_type_id === 2) {
-                    return in_array($status->author_id, $this->friendsOfFriendsIDs());
+                    return in_array($status->author_id, $this->friendAndFriendOfFriendIDs());
                 } elseif ($status->privacy_type_id === 3) {
                     return in_array($status->author_id, $this->getAllFriendIDs());
                 }
@@ -211,5 +211,18 @@ class User extends Authenticatable
         } else {
             return false;
         }
+    }
+
+    /*
+     * Returns an array of all of the IDs of the users that the current user is friends with, as well as the
+     * friends of friends for the current user.
+     *
+     * Takes all of the users returned by the friendsOfFriendsIDs and getAllFriendIDs methods and combines them into
+     * a single array.
+     *
+     * @return array - An array of the user IDs
+     */
+    public function friendAndFriendOfFriendIDs() {
+        return array_merge($this->friendsOfFriendsIDs(), $this->getAllFriendIDs());
     }
 }

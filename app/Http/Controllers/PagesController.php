@@ -33,12 +33,17 @@ class pagesController extends Controller
         $currentUser = User::find(Auth::user()->id);
 
         $userMatches = User::query()
-            ->where('first_name', 'LIKE', "%{$term}%")
-            ->orWhere('last_name', 'LIKE', "%{$term}%")
-            ->get();
+            ->where(function($q) use ($term, $currentUser) {
+                $q->where('first_name', 'LIKE', "%{$term}%")
+                    ->where('id', '!=', $currentUser->id); // Exclude the current user.
+            })->orWhere(function($q) use ($term, $currentUser) {
+                $q->where('last_name', 'LIKE', "%{$term}%")
+                    ->where('id', '!=', $currentUser->id); // Exclude the current user.
+            })->get();
 
         $statusMatches = Status::query()
             ->where('content', 'LIKE', "%{$term}%")
+            ->where('author_id', '!=', $currentUser->id) // Exclude any statuses that were created by the current user
             ->get();
 
 //        $pageMatches = ...

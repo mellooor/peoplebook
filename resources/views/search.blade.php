@@ -19,7 +19,7 @@
                         <br>
                         <div class="card status">
                             <div class="card-header">
-                                <a href="{{ route('user', $status->author_id) }}"><img src="../images/default_profile_picture-25x25.png"/> User 3</a>
+                                <a href="{{ route('user', $status->author_id) }}"><img src="../images/default_profile_picture-25x25.png"/> {{$status->author->first_name}} {{$status->author->last_name}}</a>
                             </div>
                             <div class="card-body">
                                 <p class="card-text">{{ $status->content }}</p>
