@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class RemoveIsRequestColumnFromFriendshipsTable extends Migration
+class CreatePhotoTypesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,9 @@ class RemoveIsRequestColumnFromFriendshipsTable extends Migration
      */
     public function up()
     {
-        Schema::table('friendships', function (Blueprint $table) {
-            $table->dropColumn('is_request');
+        Schema::create('photo_types', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->string('type');
         });
     }
 
@@ -25,8 +26,6 @@ class RemoveIsRequestColumnFromFriendshipsTable extends Migration
      */
     public function down()
     {
-        Schema::table('friendships', function (Blueprint $table) {
-            $table->boolean('is_request');
-        });
+        Schema::dropIfExists('photo_types');
     }
 }

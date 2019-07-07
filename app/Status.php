@@ -20,6 +20,10 @@ class Status extends Model
         return $this->hasMany('App\StatusComment', 'status_id');
     }
 
+    public function photos() {
+        return $this->hasMany('App\StatusPhoto', 'status_id');
+    }
+
     /*
      * Verifies that a variable is a Status model.
      *

@@ -34,7 +34,7 @@ class StatusPhotosController extends Controller
      */
     public function store(Request $request)
     {
-        //
+       //
     }
 
     /**

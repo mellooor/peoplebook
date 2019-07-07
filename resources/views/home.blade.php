@@ -11,7 +11,19 @@
                 <div class="alert alert-danger">
                     {{ session()->get('not-deleted') }}
                 </div>
+
             @endif
+
+            @if (session()->has('created'))
+                    <div class="alert alert-info">
+                        {{ session()->get('created') }}
+                    </div>
+            @elseif (session()->has('not-created'))
+                    <div class="alert alert-danger">
+                        {{ session()->get('not-created') }}
+                    </div>
+            @endif
+
             <br>
             <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#status-create-modal">Create Status</button>
             @if (count($data['statuses']) > 0)
@@ -35,6 +47,13 @@
                         </div>
                         <div class="card-body">
                             <p class="card-text">{{ $status->content }}</p>
+
+                            @if (count($status->photos) > 0)
+                                @foreach ($status->photos as $photo)
+                                    <img src="{{ $photo->information->file_path }}"/>
+                                @endforeach
+                            @endif
+
                             <small><b>{{ $status->created_at }}</b></small>
                             @if ($status->updated_at)
                                 <small>(Edited <b>{{ $status->updated_at }}</b>)</small>
