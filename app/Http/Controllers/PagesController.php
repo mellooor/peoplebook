@@ -14,7 +14,11 @@ class pagesController extends Controller
     }
 
     public function user($id = null) {
-        return view('user');
+        if ($user = User::getFromRouteParameter($id)) {
+            return view('user')->with('user', $user);
+        } else {
+            return redirect()->route('home');
+        }
     }
 
     public function friendRequests() {
@@ -25,8 +29,12 @@ class pagesController extends Controller
         return view('settings');
     }
 
-    public function friends() {
-        return view('friends');
+    public function friends($id = null) {
+        if ($user = User::getFromRouteParameter($id)) {
+            return view('friends')->with('user', $user);
+        } else {
+            return redirect()->route('home');
+        }
     }
 
     public function search($term) {
@@ -68,9 +76,5 @@ class pagesController extends Controller
 
     public function status($id) {
         return view('status')->with('statusID', $id);
-    }
-
-    public function userPhotos($id) {
-        return view('photos')->with('userID', $id);
     }
 }

@@ -118,6 +118,7 @@ footer {
     max-width: 100%;
     border-radius: 2px;
     border: 1px solid #000;
+    margin: auto;
 }
 
 #gallery img:hover {
@@ -131,4 +132,8 @@ footer {
 
 #photo-lightbox img {
     max-width: 100%;
+}
+
+#photo-pagination > .pagination {
+    justify-content: center;
 }

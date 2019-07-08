@@ -6,6 +6,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
 
 class User extends Authenticatable
 {
@@ -69,6 +70,21 @@ class User extends Authenticatable
         return $this->hasMany('App\Status', 'author_id');
     }
 
+    public function photos() {
+        return $this->hasMany('App\Photo', 'uploader_id');
+    }
+
+    /*
+     * Returns a paginated version of all the photos of a certain user.
+     *
+     * @param int $number - the max number of photos to be returned on a page.
+     *
+     * @return Illuminate\Pagination\LengthAwarePaginator.
+     */
+    public function paginatedPhotos($number) {
+        return $this->photos()->paginate($number);
+    }
+
     /*
      * Returns an array of all of the userIDs of the friends of a user's friends that aren't the user themselves
      * nor a user that the current user is already friends with.
@@ -124,6 +140,15 @@ class User extends Authenticatable
         $friendsOfFriendsIDsArray = array_diff($friendsOfFriendsIDsArray, $friendsIDsArray);
 
         return $friendsOfFriendsIDsArray;
+    }
+
+    /*
+     * Returns a collection of all of the users that a user is friends with.
+     *
+     * @return Illuminate\Database\Eloquent\Collection - A collection of users.
+     */
+    public function getAllFriendships() {
+        return $this->friendshipUsers1()->get()->merge($this->friendshipUsers2()->get());
     }
 
     /*
@@ -224,5 +249,23 @@ class User extends Authenticatable
      */
     public function friendAndFriendOfFriendIDs() {
         return array_merge($this->friendsOfFriendsIDs(), $this->getAllFriendIDs());
+    }
+
+    /*
+     * Returns a user from an ID value specified in a route parameter.
+     *
+     * If an invalid ID is passed, null is returned. If the ID itself is null, then the currently logged-in user
+     * is returned.
+     *
+     * @param int $id - The user ID passed in the route.
+     *
+     * @return App\User - The user that corresponds to the ID passed in the route. Returns null when the ID is invalid.
+     */
+    public static function getFromRouteParameter($id) {
+        if ($id) {
+            return User::find($id);
+        } else {
+            return User::find(Auth::user()->id);
+        }
     }
 }

@@ -38,7 +38,7 @@
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <a class="dropdown-item" href="{{ route('user') }}">View My Profile</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="{{ route('friends') }}">Friends</a>
+                        <a class="dropdown-item" href="{{ route('my-friends') }}">Friends</a>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="{{ route('settings') }}">Settings</a>
                         <div class="dropdown-divider"></div>

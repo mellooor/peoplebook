@@ -8,28 +8,22 @@ use App\User;
 
 class FriendshipsController extends Controller
 {
-    public function index() {
-        $currentUserID = \Auth::user()->id;
+    public function index($id = null) {
+        if ($user = User::getFromRouteParameter($id)) {
+            $data = ['user' => $user];
 
-        $friendships = User::find($currentUserID)->friendshipUsers1;
-        $friendships = $friendships->merge(User::find($currentUserID)->friendshipUsers2);
-        $filteredFriendships = [];
-
-        foreach ($friendships as $friendship) {
-            if ($friendship->user1_id === $currentUserID) {
-                $filteredFriendships[] = [
-                  'id' => $friendship->id,
-                  'user' => $friendship->user2
-                ];
-            } else if ($friendship->user2_id === $currentUserID) {
-                $filteredFriendships[] = [
-                    'id' => $friendship->id,
-                    'user' => $friendship->user1
-                ];
+            foreach ($user->getAllFriendships() as $friendship) {
+                if ($friendship->user1_id === $user->id) {
+                    $data['friendships'][$friendship->id] = $friendship->user2;
+                } else if ($friendship->user2_id === $user->id) {
+                    $data['friendships'][$friendship->id] = $friendship->user1;
+                }
             }
-        }
 
-        return view('friends')->with('friendships', $filteredFriendships);
+            return view('friends')->with('data', $data);
+        } else {
+            return redirect()->route('home');
+        }
     }
 
     public function destroy(Request $request) {
