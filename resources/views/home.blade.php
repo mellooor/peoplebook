@@ -30,7 +30,14 @@
                 @foreach($data['statuses'] as $status)
                     <div class="card status">
                         <div class="card-header d-flex">
-                            <a href="{{ route('user', $status->author_id) }}"><img src="../images/default_profile_picture-25x25.png"/>{{ $status->author->first_name }} {{ $status->author->last_name }}</a>
+                            <a href="{{ route('user', $status->author_id) }}">
+                                @if ($status->author->activeProfilePictureThumbnail())
+                                    <img src="{{ $status->author->activeProfilePictureThumbnail()->getFullURL() }}"/>
+                                @else
+                                    <img src="../images/default_profile_picture-25x25.png"/>
+                                @endif
+                                {{ $status->author->first_name }} {{ $status->author->last_name }}
+                            </a>
                             <div class="dropdown ml-auto">
                                 <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     Privacy
@@ -50,7 +57,7 @@
 
                             @if (count($status->photos) > 0)
                                 @foreach ($status->photos as $photo)
-                                    <img src="{{ $photo->information->file_path }}"/>
+                                    <img src="{{ $photo->information->getFullURL() }}"/>
                                 @endforeach
                             @endif
 
@@ -90,7 +97,11 @@
                                         <div class="card comment">
                                             <div class="card-body">
                                                 <a href="{{ route('user', $comment->author_id) }}">
-                                                    <img src="../images/default_profile_picture-25x25.png"/>
+                                                    @if ($comment->commenter->activeProfilePictureThumbnail())
+                                                        <img src="{{ $comment->commenter->activeProfilePictureThumbnail()->getFullURL() }}"/>
+                                                    @else
+                                                        <img src="../images/default_profile_picture-25x25.png"/>
+                                                    @endif
                                                 </a>
                                                 <p class="card-text">{{ $comment->content }}</p>
                                                 <b>({{ count($comment->likes) }} like)</b>

@@ -4,20 +4,26 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\User;
-use App\Friendship;
-use App\Photo;
 use App\Status;
 use App\StatusPhoto;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use NunoMaduro\Collision\Adapters\Laravel\ExceptionHandler;
+use App\Traits\ImagePathsTrait;
+use App\Traits\ImageUploadTrait;
+use App\Traits\StoreUploadAndThumbnailTrait;
 
 class StatusesController extends Controller
 {
+    use ImagePathsTrait;
+    use ImageUploadTrait;
+    use StoreUploadAndThumbnailTrait;
+
     /**
-     * Display a listing of the resource.
+     * Display all statuses for a given user's status feed.
      *
-     * @return \Illuminate\Http\Response
+     * The statuses that are retrieved for a user depends on the privacy settings of the statuses and the user's friends.
+     *
+     * @return \Illuminate\Http\Response - The HTTP response that correlates to the success of showing the statuses.
      */
     public function index()
     {
@@ -58,6 +64,7 @@ class StatusesController extends Controller
      * tables, the newly created status is removed before the error is returned.
      *
      * @param  \Illuminate\Http\Request  $request - The HTTP request that is to be processed.
+     * @return \Illuminate\Http\Response - The HTTP response that correlates to the success of storing a new status.
      */
     public function store(Request $request)
     {
@@ -83,33 +90,23 @@ class StatusesController extends Controller
                     // Error handling is performed to ensure that the newly created status is deleted if an error occurs.
                     try {
                         foreach ($request->file('status_images') as $image) {
-                            // Upload Image
-                            $imageFilePath = $image->store('public');
-                            /*
-                             * The file path returned is for the the storage directory. To get the path for the
-                             * public directory (that's symlinked to the storage directory), a regex replacement is
-                             * performed to swap the initial part of the path to the appropriate directory.
-                             */
-                            $imageFilePath = preg_replace('/^public\//', 'storage/', $imageFilePath);
+                            $uploadedImage = $this->uploadImage($image);
+                            $thumbnailImage = $this->createThumbnail($uploadedImage->basename);
 
-                            // Insert Image name to the Photos table
-                            $photo = new Photo();
-                            $photo->uploader_id = $currentUserID;
-                            $photo->file_path = $imageFilePath; // returned after upload.
-                            //$photo->caption =; // $request->
-                            $photo->type_id = 1;
-                            $photo->time_uploaded = DB::raw('now()');
+                            if ($imageArray = $this->storeUploadAndThumbnail($uploadedImage, $thumbnailImage)) {
+                                $uploadPhoto = $imageArray['uploadPhoto'];
+                                $thumbnailPhoto = $imageArray['thumbnailPhoto'];
 
-                            if ($photo->save()) {
                                 // Insert Image name to StatusPhotos table
                                 $statusPhoto = new StatusPhoto();
                                 $statusPhoto->status_id = $status->id;
-                                $statusPhoto->photo_id = $photo->id;
+                                $statusPhoto->photo_id = $uploadPhoto->id;
 
                                 if (!$statusPhoto->save()) {
                                     // If the status photo isn't inserted correctly...
                                     $status->delete();
-                                    $photo->delete();
+                                    $uploadPhoto->delete();
+                                    $thumbnailPhoto->delete();
                                     return redirect()->back()->with('not-created', 'There was an Error With Sharing Your Status');
                                 }
                             } else { // If the photo isn't inserted correctly...
@@ -119,7 +116,7 @@ class StatusesController extends Controller
                         }
                     } catch (\Exception $e) {
                             $status->delete();
-                            return redirect()->back()->with('not-created', 'There was an Error When Uploading Your Image(s).');
+                            return redirect()->back()->with('not-created', $e);
                     }
 
                     return redirect()->back()->with('created', 'Your Status has Been Shared');
@@ -150,9 +147,10 @@ class StatusesController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Also verifies that the current user is the author of the status that is to be updated after validating the inputs.
+     *
+     * @param  \Illuminate\Http\Request  $request - The HTTP Request.
+     * @return \Illuminate\Http\Response - The HTTP that correlates to the success of updating the status.
      */
     public function update(Request $request)
     {
@@ -188,8 +186,10 @@ class StatusesController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Also verifies that the current user is the author of the status in question before it is deleted.
+     *
+     * @param  \Illuminate\Http\Request $request - The HTTP request.
+     * @return \Illuminate\Http\Response - The HTTP response that correlates to the success of destroying the status.
      */
     public function destroy(Request $request)
     {

@@ -15,4 +15,8 @@ class StatusComment extends Model
     public function likes() {
         return $this->hasMany('App\CommentLike', 'comment_id');
     }
+
+    public function commenter() {
+        return $this->belongsTo('App\User', 'author_id');
+    }
 }

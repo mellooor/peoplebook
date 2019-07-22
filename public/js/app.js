@@ -12,7 +12,8 @@ Populates the photo lightbox modal with the image selected by the user via a mou
         photoElement.addEventListener('click', function(e) {
             var photoSrc, lightboxImageElement;
 
-            photoSrc = e.target.src; // Get the src of the clicked image.
+            photoSrc = e.target.src; // Get the thumbnail src of the clicked image.
+            photoSrc = photoSrc.replace('_260x260', ''); // Get the main image src by removing the affix from the file name.
 
             // Set the lightbox image.
             lightboxImageElement = document.getElementById('photo-lightbox-image');
@@ -131,15 +132,18 @@ Populate the status delete modal box hidden input when it is toggled.
     statusDeleteBtns = document.querySelectorAll('.status .btn-danger');
     statusDeleteBtnsArray = Array.prototype.slice.call(statusDeleteBtns);
     statusDeleteForm = document.getElementById('delete-status-form');
-    targetStatusDeleteInput = statusDeleteForm.querySelector('input[name="status-id"]');
 
-    statusDeleteBtnsArray.forEach(function(statusDeleteBtn) {
-        statusDeleteBtn.addEventListener('click', function() {
-            var statusID = statusDeleteBtn.dataset.statusId;
+    if (statusDeleteForm) {
+        targetStatusDeleteInput = statusDeleteForm.querySelector('input[name="status-id"]');
 
-            targetStatusDeleteInput.value = statusID;
+        statusDeleteBtnsArray.forEach(function(statusDeleteBtn) {
+            statusDeleteBtn.addEventListener('click', function() {
+                var statusID = statusDeleteBtn.dataset.statusId;
+
+                targetStatusDeleteInput.value = statusID;
+            });
         });
-    });
+    }
 })();
 
 /*
@@ -152,22 +156,25 @@ Populate the status edit modal box when it is toggled.
     statusEditBtnsArray = Array.prototype.slice.call(statusEditBtns);
     statusEditForm = document.getElementById('status-edit-form');
     statusEditFormBody = document.getElementById('status-edit-body');
-    targetStatusEditInput = statusEditForm.querySelector('input[name="status-id"]');
 
-    statusEditBtnsArray.forEach(function(statusEditBtn) {
-        var mainStatusElement, statusBodyTextElement, statusID, existingStatusBody;
+    if (statusEditForm) {
+        targetStatusEditInput = statusEditForm.querySelector('input[name="status-id"]');
 
-        mainStatusElement = statusEditBtn.closest('.status');
-        statusBodyTextElement = mainStatusElement.querySelector('.card-text');
+        statusEditBtnsArray.forEach(function(statusEditBtn) {
+            var mainStatusElement, statusBodyTextElement, statusID, existingStatusBody;
 
-        statusID = statusEditBtn.dataset.statusId;
-        existingStatusBody = statusBodyTextElement.innerText;
+            mainStatusElement = statusEditBtn.closest('.status');
+            statusBodyTextElement = mainStatusElement.querySelector('.card-text');
 
-        statusEditBtn.addEventListener('click', function() {
-            targetStatusEditInput.value = statusID;
-            statusEditFormBody.value = existingStatusBody;
+            statusID = statusEditBtn.dataset.statusId;
+            existingStatusBody = statusBodyTextElement.innerText;
+
+            statusEditBtn.addEventListener('click', function() {
+                targetStatusEditInput.value = statusID;
+                statusEditFormBody.value = existingStatusBody;
+            });
         });
-    });
+    }
 })();
 
 /*
@@ -199,25 +206,28 @@ Populate the status comment edit modal box when it is triggered.
     commentEditBtnsArray = Array.prototype.slice.call(commentEditBtns);
     commentEditForm = document.getElementById('status-comment-edit-form');
     commentEditFormBody = document.getElementById('status-comment-edit-body');
-    targetStatusIDInput = commentEditForm.querySelector('input[name="status-id"]');
-    targetCommentIDInput = commentEditForm.querySelector('input[name="comment-id"]');
 
-    commentEditBtnsArray.forEach(function(commentEditBtn) {
-        var mainCommentElement, commentTextElement, statusID, commentID, existingComment;
+    if (commentEditForm) {
+        targetStatusIDInput = commentEditForm.querySelector('input[name="status-id"]');
+        targetCommentIDInput = commentEditForm.querySelector('input[name="comment-id"]');
 
-        mainCommentElement = commentEditBtn.closest('.comment');
-        commentTextElement = mainCommentElement.querySelector('.card-text');
+        commentEditBtnsArray.forEach(function(commentEditBtn) {
+            var mainCommentElement, commentTextElement, statusID, commentID, existingComment;
 
-        statusID = commentEditBtn.dataset.statusId;
-        commentID = commentEditBtn.dataset.commentId;
-        existingComment = commentTextElement.innerText;
+            mainCommentElement = commentEditBtn.closest('.comment');
+            commentTextElement = mainCommentElement.querySelector('.card-text');
 
-        commentEditBtn.addEventListener('click', function() {
-            targetStatusIDInput.value = statusID;
-            targetCommentIDInput.value = commentID;
-            commentEditFormBody.value = existingComment;
+            statusID = commentEditBtn.dataset.statusId;
+            commentID = commentEditBtn.dataset.commentId;
+            existingComment = commentTextElement.innerText;
+
+            commentEditBtn.addEventListener('click', function() {
+                targetStatusIDInput.value = statusID;
+                targetCommentIDInput.value = commentID;
+                commentEditFormBody.value = existingComment;
+            });
         });
-    });
+    }
 })();
 
 /*
@@ -228,18 +238,71 @@ Populate the status comment delte modal box when it is triggered.
     commentDeleteBtns = document.querySelectorAll('.status-comment-delete-btn');
     commentDeleteBtnsArray = Array.prototype.slice.call(commentDeleteBtns);
     commentDeleteForm = document.getElementById('delete-status-comment-form');
-    targetStatusIDInput = commentDeleteForm.querySelector('input[name="status-id"]');
-    targetCommentIDInput = commentDeleteForm.querySelector('input[name="comment-id"]');
 
-    commentDeleteBtnsArray.forEach(function(commentDeleteBtn) {
-        commentDeleteBtn.addEventListener('click', function() {
-            var statusID, commentID;
+    if (commentDeleteForm) {
+        targetStatusIDInput = commentDeleteForm.querySelector('input[name="status-id"]');
+        targetCommentIDInput = commentDeleteForm.querySelector('input[name="comment-id"]');
 
-            statusID = commentDeleteBtn.dataset.statusId;
-            commentID = commentDeleteBtn.dataset.commentId;
+        commentDeleteBtnsArray.forEach(function(commentDeleteBtn) {
+            commentDeleteBtn.addEventListener('click', function() {
+                var statusID, commentID;
 
-            targetStatusIDInput.value = statusID;
-            targetCommentIDInput.value = commentID;
+                statusID = commentDeleteBtn.dataset.statusId;
+                commentID = commentDeleteBtn.dataset.commentId;
+
+                targetStatusIDInput.value = statusID;
+                targetCommentIDInput.value = commentID;
+            });
         });
-    });
+    }
+})();
+
+/*
+Populate the photo modal box delete form hidden input when it is toggled.
+ */
+(function() {
+    var photoElements, photoElementsArray, photoDeleteForm, targetUploadPhotoIDInput;
+
+    photoElements = document.querySelectorAll('.gallery-image');
+    photoElementsArray = Array.prototype.slice.call(photoElements);
+    photoDeleteForm = document.getElementById('photo-delete-form');
+
+    if (photoDeleteForm) {
+        targetUploadPhotoIDInput = photoDeleteForm.querySelector('input[name="thumbnail-photo-ID"]');
+
+        photoElementsArray.forEach(function(photoElement) {
+            var photoID;
+
+            photoID = photoElement.dataset.photoId;
+
+            photoElement.addEventListener('click', function() {
+                targetUploadPhotoIDInput.value = photoID;
+            });
+        });
+    }
+})();
+
+/*
+Populate the photo modal box Update Profile Picture form hidden input when it is toggled.
+ */
+(function() {
+    var photoElements, photoElementsArray, setAsProfilePictureForm, targetPhotoIDInput;
+
+    photoElements = document.querySelectorAll('.gallery-image');
+    photoElementsArray = Array.prototype.slice.call(photoElements);
+    setAsProfilePictureForm = document.getElementById('update-profile-picture-form');
+
+    if (setAsProfilePictureForm) {
+        targetPhotoIDInput = setAsProfilePictureForm.querySelector('input[name="thumbnail-id"]');
+
+        photoElementsArray.forEach(function(photoElement) {
+            var photoID;
+
+            photoID = photoElement.dataset.photoId;
+
+            photoElement.addEventListener('click', function() {
+                targetPhotoIDInput.value = photoID;
+            });
+        });
+    }
 })();

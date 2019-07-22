@@ -3,9 +3,14 @@
 @section('content')
     <div class="row">
         <div class="col-md-9">
-            <img src="/images/default_profile_picture-320x320.png"/>
+            @if ($user->activeProfilePicture())
+                <img src="{{ $user->activeProfilePicture()->getFullURL() }}"/>
+            @else
+                <img src="/images/default_profile_picture-320x320.png"/>
+            @endif
+
             <!-- If userID matches current user -->
-            <button class="btn btn-warning"><i class="fas fa-pencil-alt"></i></button>
+            <button class="btn btn-warning" data-toggle="modal" data-target="#add-profile-pic-modal"><i class="fas fa-pencil-alt"></i></button>
             <!-- end if -->
             <h2>{{ $user->first_name }} {{ $user->last_name }}</h2>
 
@@ -27,15 +32,20 @@
                     @if ($user->id === Auth::user()->id)
                         <a class="btn" href="{{ route('my-photos') }}"><img class="card-img-top" src="/images/picture-icon_256x256.png" alt="Card image cap"></a>
                         <a class="btn" href="{{ route('my-photos') }}">
+                            <div class="card-body">
+                                <p class="card-text">Photos</p>
+                            </div>
+                        </a>
                     @else
                         <a class="btn" href="{{ route('photos', $user->id) }}"><img class="card-img-top" src="/images/picture-icon_256x256.png" alt="Card image cap"></a>
                         <a class="btn" href="{{ route('photos', $user->id) }}">
+                            <div class="card-body">
+                                <p class="card-text">Photos</p>
+                            </div>
+                        </a>
                     @endif
 
-                        <div class="card-body">
-                            <p class="card-text">Photos</p>
-                        </div>
-                    </a>
+
                 </div>
                 <div class="card">
                     <a class="btn" href="{{ route('friends', $user->id) }}"><img class="card-img-top" src="/images/multiple-users-icon_256x256.png" alt="Card image cap"></a>
@@ -53,7 +63,14 @@
                     @foreach ($user->statuses as $status)
                         <div class="card status">
                             <div class="card-header d-flex">
-                                <a href="{{ route('user', $status->author_id) }}"><img src="../images/default_profile_picture-25x25.png"/>{{ $status->author->first_name }} {{ $status->author->last_name }}</a>
+                                <a href="{{ route('user', $status->author_id) }}">
+                                    @if ($user->activeProfilePictureThumbnail())
+                                        <img src="{{ $user->activeProfilePictureThumbnail()->getFullURL() }}"/>
+                                    @else
+                                        <img src="../images/default_profile_picture-25x25.png"/>
+                                    @endif
+                                    {{ $status->author->first_name }} {{ $status->author->last_name }}
+                                </a>
                                 <div class="dropdown ml-auto">
                                     <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         Privacy
@@ -73,7 +90,7 @@
 
                                 @if (count($status->photos) > 0)
                                     @foreach ($status->photos as $photo)
-                                        <img src="{{ url('/') . '/' . $photo->information->file_path }}"/>
+                                        <img src="{{ url('/') . '/' . $photo->information->getFullURL() }}"/>
                                     @endforeach
                                 @endif
 
@@ -96,7 +113,7 @@
                                         <form action="{{ route('unlike-status') }}" method="post">
                                             @csrf
                                             @method('DELETE')
-                                            <input type="hidden" name="status-like-id" value="{{ $status->likes->firstWhere('user_id', $data['currentUserID'])->id }}"/>
+                                            <input type="hidden" name="status-like-id" value="{{ $status->likes->firstWhere('user_id', Auth::user()->id)->id }}"/>
                                             <button type="submit" class="btn btn-link">Unlike</button>
                                         </form>
                                     @else
@@ -112,18 +129,23 @@
                                         <div id="collapse-{{ $loop->parent->index }}" class="row comments collapse">
                                             <div class="card comment">
                                                 <div class="card-body">
-                                                    <a href="{{ route('user', $comment->author_id) }}">
-                                                        <img src="../images/default_profile_picture-25x25.png"/>
+                                                    <a href="{{ route('user', $status->author_id) }}">
+                                                        @if ($user->activeProfilePictureThumbnail())
+                                                            <img src="{{ $user->activeProfilePictureThumbnail()->getFullURL() }}"/>
+                                                        @else
+                                                            <img src="../images/default_profile_picture-25x25.png"/>
+                                                        @endif
+                                                        {{ $status->author->first_name }} {{ $status->author->last_name }}
                                                     </a>
                                                     <p class="card-text">{{ $comment->content }}</p>
                                                     <b>({{ count($comment->likes) }} like)</b>
 
-                                                    @if ( $comment->likes->contains('user_id', $data['currentUserID']))
+                                                    @if ( $comment->likes->contains('user_id', Auth::user()->id))
                                                         <form action="{{ route('unlike-comment') }}" method="post">
                                                             @csrf
                                                             @method('DELETE')
                                                             <input type="hidden" name="comment-id" value="{{ $comment->id }}"/>
-                                                            <input type="hidden" name="comment-like-id" value="{{ $comment->likes->firstWhere('user_id', $data['currentUserID'])->id }}"/>
+                                                            <input type="hidden" name="comment-like-id" value="{{ $comment->likes->firstWhere('user_id', Auth::user()->id) }}"/>
                                                             <button type="submit" class="btn btn-link">Unlike</button>
                                                         </form>
                                                     @else
@@ -134,7 +156,7 @@
                                                         </form>
                                                     @endif
 
-                                                    @if ($comment->author_id === $data['currentUserID'])
+                                                    @if ($comment->author_id === Auth::user()->id)
                                                         <button class="btn btn-link status-comment-edit-btn" data-toggle="modal" data-target="#status-comment-edit-modal" data-status-id="{{ $status->id }}" data-comment-id="{{ $comment->id }}">Edit</button>
                                                         <button class="btn btn-link status-comment-delete-btn" data-toggle="modal" data-target="#status-comment-delete-confirm" data-status-id="{{ $status->id }}" data-comment-id="{{ $comment->id }}">Delete</button>
                                                     @endif
@@ -165,5 +187,6 @@
         @include("inc/sidebar")
         @include("inc/likes-modal")
         @include("inc/status-delete-confirm")
+        @include("inc/add-profile-pic-modal")
     </div>
 @endsection

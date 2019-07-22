@@ -16,6 +16,8 @@ Route::get('/', 'StatusesController@index')->name('home');
 Auth::routes();
 
 Route::get('/user/{id?}', 'PagesController@user')->name('user')->middleware('auth');
+Route::post('/add-profile-picture', 'PhotosController@storeProfilePicture')->name('add-profile-picture')->middleware('auth');
+Route::put('update-profile-picture', 'PhotosController@changeProfilePicture')->name('update-profile-picture')->middleware('auth');
 Route::get('/friend-requests', 'FriendRequestsController@index')->name('friend-requests')->middleware('auth');
 Route::get('/settings', 'PagesController@settings')->name('settings')->middleware('auth');
 Route::get('user/{id}/friends', 'FriendshipsController@index')->name('friends')->middleware('auth');
@@ -40,5 +42,7 @@ Route::put('/status/comment/edit', 'StatusCommentsController@update')->name('upd
 Route::delete('/status/comment/delete', 'StatusCommentsController@destroy')->name('delete-comment')->middleware('auth');
 Route::post('/status/comment/like', 'CommentLikesController@store')->name('like-comment')->middleware('auth');
 Route::delete('/status/comment/unlike', 'CommentLikesController@destroy')->name('unlike-comment')->middleware('auth');
+Route::post('photos/add', 'PhotosController@store')->name('add-photos')->middleware('auth');
+Route::delete('photo/delete', 'PhotosController@destroy')->name('delete-photo')->middleware('auth');
 
 Route::redirect('/home', '/');

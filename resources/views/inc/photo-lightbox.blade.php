@@ -16,20 +16,38 @@
                             <div class="card status">
                                 <div class="card-header d-flex">
                                     <a href="{{ route('user', 1) }}"><img src="/images/default_profile_picture-25x25.png"/> User 1</a>
-                                    <div class="dropdown ml-auto">
-                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            Privacy
-                                        </button>
-                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <a class="dropdown-item" href="#">Show to All Users <i class="fas fa-check"></i></a>
-                                            <a class="dropdown-item" href="#">Show to Friends Only</a>
+                                    @if (Auth::user()->id === $user->id)
+                                        <div class="dropdown ml-auto">
+                                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                Privacy
+                                            </button>
+                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                                <a class="dropdown-item" href="#">Show to All Users <i class="fas fa-check"></i></a>
+                                                <a class="dropdown-item" href="#">Show to Friends Only</a>
+                                            </div>
                                         </div>
-                                    </div>
+
+                                        <form id="photo-delete-form" method="post" action="{{ route('delete-photo') }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <input type="hidden" name="thumbnail-photo-ID" value=""/>
+                                            <button type="submit" class="btn btn-danger">Delete</button>
+                                        </form>
+                                    @endif
+
                                 </div>
                                 <div class="card-body">
                                     <p class="card-text">Hello World <small>27 minutes ago</small> <small><b>Edited</b> 10 minutes ago</small></p>
                                     <div class="row">
                                         <button class="btn btn-link" data-toggle="modal" data-target="#likes-modal">1 Like</button>
+                                        @if (Auth::user()->id === $user->id)
+                                            <form id="update-profile-picture-form" method="post" action="{{ route('update-profile-picture') }}">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="hidden" name="thumbnail-id" value="1"/>
+                                                <button class="btn btn-link" type="submit">Make Profile Picture</button>
+                                            </form>
+                                        @endif
                                     </div>
                                     <div class="row">
                                         <a href="#">Like</a>

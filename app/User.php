@@ -74,6 +74,10 @@ class User extends Authenticatable
         return $this->hasMany('App\Photo', 'uploader_id');
     }
 
+    public function photoThumbnails() {
+        return $this->hasMany('App\Photo', 'uploader_id')->where('type_id', 3);
+    }
+
     /*
      * Returns a paginated version of all the photos of a certain user.
      *
@@ -81,8 +85,16 @@ class User extends Authenticatable
      *
      * @return Illuminate\Pagination\LengthAwarePaginator.
      */
-    public function paginatedPhotos($number) {
-        return $this->photos()->paginate($number);
+    public function paginatedThumbnailPhotos($number) {
+        return $this->photoThumbnails()->paginate($number);
+    }
+
+    public function activeProfilePicture() {
+        return $this->hasMany('App\Photo', 'uploader_id')->where('type_id', 5)->first();
+    }
+
+    public function activeProfilePictureThumbnail() {
+        return $this->hasMany('App\Photo', 'uploader_id')->where('type_id', 6)->first();
     }
 
     /*
