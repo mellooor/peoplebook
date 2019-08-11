@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 Use App\StatusComment;
-Use App\CommentLike;
+Use App\StatusCommentLike;
 
-class CommentLikesController extends Controller
+class StatusCommentLikesController extends Controller
 {
     /**
      * Store a newly created resource in storage.
@@ -28,7 +28,7 @@ class CommentLikesController extends Controller
         if ($comment = StatusComment::find($commentID)) {
             // If the current user hasn't already liked the comment.
             if (!$comment->likes->contains('user_id', $currentUserID)) {
-                $commentLike = new CommentLike();
+                $commentLike = new StatusCommentLike();
                 $commentLike->user_id = $currentUserID;
                 $commentLike->comment_id = $comment->id;
 
@@ -67,7 +67,7 @@ class CommentLikesController extends Controller
         // If the comment ID from the request points to an existing comment in the status comments DB table.
         if ($comment = StatusComment::find($commentID)) {
             // If the comment like ID from the request points to an existing comment in the comment likes DB table.
-            if ($commentLike = CommentLike::find($commentLikeID)) {
+            if ($commentLike = StatusCommentLike::find($commentLikeID)) {
                 if ($commentLike->user_id === $currentUserID) {
                     // If the comment is successfully deleted from the comment likes DB table.
                     if ($commentLike->delete()) {

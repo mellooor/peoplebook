@@ -13,7 +13,7 @@ class StatusComment extends Model
     }
 
     public function likes() {
-        return $this->hasMany('App\CommentLike', 'comment_id');
+        return $this->hasMany('App\StatusCommentLike', 'comment_id');
     }
 
     public function commenter() {

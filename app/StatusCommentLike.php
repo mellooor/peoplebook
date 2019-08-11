@@ -4,7 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class CommentLike extends Model
+class StatusCommentLike extends Model
 {
     public $timestamps = false;
 
