@@ -4,27 +4,22 @@
     <div class="row">
         <div class="col-md-12">
             <div id="notifs-container">
-                <a href="{{ route('status', 1) }}">
-                    <div class="card">
-                        <div class="card-body">
-                            <img src="images/default_profile_picture-25x25.png"/> User 3 liked your comment: "Why hello there". <small>59 minutes ago</small>
-                        </div>
-                    </div>
-                </a>
-                <a href="{{ route('status', 1) }}">
-                    <div class="card">
-                        <div class="card-body">
-                            <img src="images/default_profile_picture-25x25.png"/> User 1 replied to your comment: "LOL". <small>Tuesday 11:23</small>
-                        </div>
-                    </div>
-                </a>
-                <a href="{{ route('friend-requests') }}">
-                    <div class="card">
-                        <div class="card-body">
-                            <img src="images/default_profile_picture-25x25.png"/> User 5 sent you a friend request. <small>2 Months Ago</small>
-                        </div>
-                    </div>
-                </a>
+
+                @if (count($notifications) > 0)
+                    @foreach ($notifications as $notification)
+                        @if ($notification->type_id === 1) <!-- status-commented -->
+                            @include('inc/status-commented-notification-item', ['statusComment' => $notification->activity->statusComment])
+                        @elseif ($notification->type_id === 2) <!-- status-liked -->
+                            @include('inc/status-liked-notification-item', ['statusLike' => $notification->activity->statusLike])
+                        @elseif ($notification->type_id === 3) <!-- friend-request-accepted -->
+                            @include('inc/friend-request-accepted-notification-item', ['newFriendship' => $notification->activity->newFriendship])
+                        @elseif ($notification->type_id === 4) <!-- comment-liked -->
+                            @include('inc/comment-liked-notification-item', ['commentLike' => $notification->activity->statusCommentLike])
+                        @endif
+                    @endforeach
+                @else
+                        <h2>You currently have no notifications.</h2>
+                @endif
             </div>
         </div>
     </div>

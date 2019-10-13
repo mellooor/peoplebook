@@ -24,6 +24,10 @@ class Status extends Model
         return $this->hasMany('App\StatusPhoto', 'status_id');
     }
 
+    public function activity() {
+        return $this->hasOne('App\Activity', 'created_status_id', 'id');
+    }
+
     /*
      * Verifies that a variable is a Status model.
      *

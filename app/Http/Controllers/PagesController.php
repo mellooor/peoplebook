@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Activity;
 use App\User;
 use App\Status;
 use Illuminate\Support\Facades\Auth;
@@ -76,5 +76,41 @@ class pagesController extends Controller
 
     public function status($id) {
         return view('status')->with('statusID', $id);
+    }
+
+    public function newsFeedIndex() {
+        if (\Auth::check()) {
+            $currentUserID = Auth::user()->id;
+            $currentUser = User::find($currentUserID);
+            $data = [];
+
+            $data['newsFeedItems'] = Activity::where(function($q) use ($currentUser) {
+                $currentUserFriendIDs = $currentUser->getAllFriendIDs();
+
+                /*
+                 * Get all activities where at least one of the users is a friend of the current user, neither of
+                 * the users are the current user and where the activity is one for a status being created, a photo
+                 * being uploaded, a profile picture being changed or a new friendship.
+                 */
+                $q->whereIn('user1_id', $currentUserFriendIDs)
+                    ->orWhereIn('user2_id', $currentUserFriendIDs);
+            })->where('user1_id', '!=', $currentUserID)
+                ->where(function($q) use ($currentUserID) {
+                $q->where('user2_id', '!=', $currentUserID)
+                    ->orWhere('user2_id', '=', null);
+            })->where(function($q) {
+                $q->where('created_status_id', '!=', null)
+                    ->orWhere('uploaded_photo_id', '!=', null)
+                    ->orWhere('updated_profile_picture_photo_id', '!=', null)
+                    ->orWhere('new_friendship_id', '!=', null);
+            })->orderBy('created_at', 'DESC')->paginate(10);
+
+            $data['currentUser'] = $currentUser;
+
+
+            return view('home')->with('data', $data);
+        } else {
+            return view('welcome');
+        }
     }
 }

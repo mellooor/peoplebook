@@ -38,4 +38,24 @@ class Friendship extends Model
     public function userIDsMatch($user1ID, $user2ID) {
         return (($this->user1_id === $user1ID && $this->user2_id === $user2ID) || ($this->user1_id === $user2ID && $this->user2_id === $user1ID));
     }
+
+    /*
+     * Returns the ID of the user of a friendship that involves the current user which doesn't belong to the user themselves.
+     */
+    public function nonCurrentUser() {
+        $currentUserID = \Auth::user()->id;
+
+        // Only return a valid ID if the current user is one of the users in the friendship.
+        if ($this->user1_id === $currentUserID || $this->user2_id === $currentUserID) {
+            if ($this->user1_id === $currentUserID) {
+                return $this->user2;
+            } elseif ($this->user2_id === $currentUserID) {
+                return $this->user1;
+            } else {
+                return 0;
+            }
+        } else {
+            return 0;
+        }
+    }
 }

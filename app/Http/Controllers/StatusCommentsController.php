@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Status;
 use App\StatusComment;
 use Illuminate\Support\Facades\DB;
+use App\Activity;
+use App\Notification;
 
 class StatusCommentsController extends Controller
 {
@@ -54,11 +56,49 @@ class StatusCommentsController extends Controller
             $statusComment->content = $comment;
             $statusComment->created_at = DB::raw('now()');
 
-            if ($statusComment->save()) {
-                return redirect()->back();
-            } else {
+            if (!$statusComment->save()) {
                 return redirect()->back()->with('not-commented', 'An Error Occurred when Adding the Comment. Please try Again');
             }
+
+            // Save Activity
+            try {
+                $activity = new Activity();
+                $activity->user1_id = $statusComment->author_id;
+                $activity->user2_id = $status->author_id;
+                $activity->status_comment_id = $statusComment->id;
+                $activity->created_at = DB::raw('now()');
+
+                if (!$activity->save()) {
+                    $statusComment->delete();
+                    return redirect()->back()->with('not-commented', 'There was an Error When Commenting on the Status');
+                }
+            } catch (\Exception $e) {
+                $statusComment->delete();
+                return redirect()->back()->with('not-commented', 'There was an Error when Commenting on the Status');
+            }
+
+            // Save Notification if the user that is commenting on the status isn't the author of the status itself.
+            if ($statusComment->author_id !== $status->author_id) {
+                try {
+                    $notification = new Notification();
+                    $notification->user_id = $status->author_id;
+                    $notification->type_id = 1; // status-commented.
+                    $notification->is_active = true;
+                    $notification->activity_id = $activity->id;
+
+                    if (!$notification->save()) {
+                        $statusComment->delete();
+                        $activity->delete();
+                        return redirect()->back()->with('not-commented', 'There was an Error When Commenting on the Status');
+                    }
+                } catch (\Exception $e) {
+                    $statusComment->delete();
+                    $activity->delete();
+                    return redirect()->back()->with('not-commented', 'There was an Error When Commenting on the Status');
+                }
+            }
+
+            return redirect()->back();
         } else {
             return redirect()->back();
         }

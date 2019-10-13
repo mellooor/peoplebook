@@ -20,7 +20,12 @@
         @else
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('notifications') }}">Notifications <span class="badge badge-pill badge-danger">1</span></a>
+                    <a class="nav-link" href="{{ route('notifications') }}">Notifications
+                        @if ($navbarData['notification-count'] > 0)
+                            <span class="badge badge-pill badge-danger">{{ $navbarData['notification-count'] }}</span></a>
+                        @else
+                            <span class="badge badge-pill badge-info">{{ $navbarData['notification-count'] }}</span></a>
+                    @endif
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('friend-requests') }}">Friend Requests

@@ -11,4 +11,8 @@ class StatusCommentLike extends Model
     public function comment() {
         return $this->belongsTo('App\StatusComment', 'comment_id');
     }
+
+    public function liker() {
+        return $this->belongsTo('App\User', 'user_id');
+    }
 }

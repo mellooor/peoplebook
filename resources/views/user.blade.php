@@ -64,8 +64,8 @@
                         <div class="card status">
                             <div class="card-header d-flex">
                                 <a href="{{ route('user', $status->author_id) }}">
-                                    @if ($user->activeProfilePictureThumbnail())
-                                        <img src="{{ $user->activeProfilePictureThumbnail()->getFullURL() }}"/>
+                                    @if ($user->activeProfilePictureThumbnail)
+                                        <img src="{{ $user->activeProfilePictureThumbnail->getFullURL() }}"/>
                                     @else
                                         <img src="../images/default_profile_picture-25x25.png"/>
                                     @endif
@@ -130,8 +130,8 @@
                                             <div class="card comment">
                                                 <div class="card-body">
                                                     <a href="{{ route('user', $status->author_id) }}">
-                                                        @if ($user->activeProfilePictureThumbnail())
-                                                            <img src="{{ $user->activeProfilePictureThumbnail()->getFullURL() }}"/>
+                                                        @if ($user->activeProfilePictureThumbnail)
+                                                            <img src="{{ $user->activeProfilePictureThumbnail->getFullURL() }}"/>
                                                         @else
                                                             <img src="../images/default_profile_picture-25x25.png"/>
                                                         @endif

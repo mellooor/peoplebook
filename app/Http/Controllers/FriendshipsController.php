@@ -11,6 +11,7 @@ class FriendshipsController extends Controller
     public function index($id = null) {
         if ($user = User::getFromRouteParameter($id)) {
             $data = ['user' => $user];
+            $data['friendships'] = [];
 
             foreach ($user->getAllFriendships() as $friendship) {
                 if ($friendship->user1_id === $user->id) {

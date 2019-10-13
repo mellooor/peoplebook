@@ -11,7 +11,7 @@
 |
 */
 
-Route::get('/', 'StatusesController@index')->name('home');
+Route::get('/', 'PagesController@newsFeedIndex')->name('home');
 
 Auth::routes();
 
@@ -23,7 +23,7 @@ Route::get('/settings', 'PagesController@settings')->name('settings')->middlewar
 Route::get('user/{id}/friends', 'FriendshipsController@index')->name('friends')->middleware('auth');
 Route::delete('/friends/remove', 'FriendshipsController@destroy')->name('remove-friend')->middleware('auth');
 Route::get('/friends', 'FriendshipsController@index')->name('my-friends')->middleware('auth');
-Route::get('/notifications', 'PagesController@notifications')->name('notifications')->middleware('auth');
+Route::get('/notifications', 'NotificationsController@index')->name('notifications')->middleware('auth');
 Route::get('/search/{term}', 'PagesController@search')->name('search')->middleware('auth');
 Route::get('/user/{id}/more-info', 'PagesController@userMoreInfo')->name('user-more-info')->middleware('auth');
 Route::get('status/{id}', 'PagesController@status')->name('status')->middleware('auth');
@@ -40,7 +40,7 @@ Route::delete('status/unlike', 'StatusLikesController@destroy')->name('unlike-st
 Route::post('/status/comment/add', 'StatusCommentsController@store')->name('add-comment')->middleware('auth');
 Route::put('/status/comment/edit', 'StatusCommentsController@update')->name('update-comment')->middleware('auth');
 Route::delete('/status/comment/delete', 'StatusCommentsController@destroy')->name('delete-comment')->middleware('auth');
-Route::post('/status/comment/like', 'CommentLikesController@store')->name('like-comment')->middleware('auth');
+Route::post('/status/comment/like', 'StatusCommentLikesController@store')->name('like-comment')->middleware('auth');
 Route::delete('/status/comment/unlike', 'CommentLikesController@destroy')->name('unlike-comment')->middleware('auth');
 Route::post('photos/add', 'PhotosController@store')->name('add-photos')->middleware('auth');
 Route::delete('photo/delete', 'PhotosController@destroy')->name('delete-photo')->middleware('auth');

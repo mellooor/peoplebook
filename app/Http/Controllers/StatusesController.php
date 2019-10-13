@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Traits\ImagePathsTrait;
 use App\Traits\ImageUploadTrait;
 use App\Traits\StoreUploadAndThumbnailTrait;
+use App\Activity;
 
 class StatusesController extends Controller
 {
@@ -27,32 +28,28 @@ class StatusesController extends Controller
      */
     public function index()
     {
-        if (\Auth::check()) {
-            $currentUserID = \Auth::user()->id;
-            $friendships = User::find($currentUserID)->friendshipUsers1;
-            $friendships = $friendships->merge(User::find($currentUserID)->friendshipUsers2);
+        $currentUserID = \Auth::user()->id;
+        $friendships = User::find($currentUserID)->friendshipUsers1;
+        $friendships = $friendships->merge(User::find($currentUserID)->friendshipUsers2);
 
-            $statuses = User::find($currentUserID)->statuses;
+        $statuses = User::find($currentUserID)->statuses;
 
-            foreach ($friendships as $friendship) {
-                if ($friendship->user1_id === $currentUserID) {
-                    $statuses = $statuses->merge($friendship->user2->statuses);
-                } else if ($friendship->user2_id === $currentUserID) {
-                    $statuses = $statuses->merge($friendship->user1->statuses);
-                }
+        foreach ($friendships as $friendship) {
+            if ($friendship->user1_id === $currentUserID) {
+                $statuses = $statuses->merge($friendship->user2->statuses);
+            } else if ($friendship->user2_id === $currentUserID) {
+                $statuses = $statuses->merge($friendship->user1->statuses);
             }
-
-            $sortedStatuses = $statuses->sortByDesc('created_at');
-
-            $data = [
-             'currentUserID' => $currentUserID,
-             'statuses' => $sortedStatuses
-            ];
-
-            return view('home')->with('data', $data);
-        } else {
-            return view('welcome');
         }
+
+        $sortedStatuses = $statuses->sortByDesc('created_at');
+
+        $data = [
+         'currentUserID' => $currentUserID,
+         'statuses' => $sortedStatuses
+        ];
+
+        return view('home')->with('data', $data);
     }
 
     /**
@@ -86,6 +83,22 @@ class StatusesController extends Controller
 
             // if status saved...
             if ($status->save()) {
+                // Save Activity
+                try {
+                    $activity = new Activity();
+                    $activity->user1_id = $status->author_id;
+                    $activity->created_status_id = $status->id;
+                    $activity->created_at = DB::raw('now()');
+
+                    if (!$activity->save()) {
+                        $status->delete();
+                        return redirect()->back()->with('not-created', 'There was an Error With Sharing Your Status');
+                    }
+                } catch (\Exception $e) {
+                    $status->delete();
+                    return redirect()->back()->with('not-created', 'There was an Error With Sharing Your Status');
+                }
+
                 if ($request->hasFile('status_images')) {
                     // Error handling is performed to ensure that the newly created status is deleted if an error occurs.
                     try {
@@ -105,17 +118,20 @@ class StatusesController extends Controller
                                 if (!$statusPhoto->save()) {
                                     // If the status photo isn't inserted correctly...
                                     $status->delete();
+                                    $activity->delete();
                                     $uploadPhoto->delete();
                                     $thumbnailPhoto->delete();
                                     return redirect()->back()->with('not-created', 'There was an Error With Sharing Your Status');
                                 }
                             } else { // If the photo isn't inserted correctly...
                                 $status->delete();
+                                $activity->delete();
                                 return redirect()->back()->with('not-created', 'There was an Error With Sharing Your Status');
                             }
                         }
                     } catch (\Exception $e) {
                             $status->delete();
+                            $activity->delete();
                             return redirect()->back()->with('not-created', $e);
                     }
 

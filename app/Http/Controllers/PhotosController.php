@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Traits\StoreUploadAndThumbnailTrait;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use App\Activity;
 
 class PhotosController extends Controller
 {
@@ -53,9 +54,32 @@ class PhotosController extends Controller
                 foreach ($request->file('photos') as $image) {
                     $uploadedImage = $this->uploadImage($image);
                     $thumbnailImage = $this->createThumbnail($uploadedImage->basename);
+                    $successfulStorage = $this->storeUploadAndThumbnail($uploadedImage, $thumbnailImage);
 
-                    if (!$this->storeUploadAndThumbnail($uploadedImage, $thumbnailImage)) {
+                    if (!$successfulStorage) {
                         return redirect()->back()->with('not-uploaded', 'There was an Error When Uploading Your Photos');
+                    }
+
+                    try {
+                        $uploadModel = $successfulStorage['uploadPhoto'];
+
+                        $activity = new Activity();
+                        $activity->user1_id = $uploadModel->uploader_id;
+                        $activity->uploaded_photo_id = $uploadModel->id;
+                        $activity->created_at = DB::raw('now()');
+
+                        if (!$activity->save()) {
+                            // Delete upload photo, associated thumbnail and remove both from the Photos table.
+                            $thumbnailModel = $successfulStorage['thumbnailPhoto'];
+                            $this->deletePhotosFromThumbnail($thumbnailModel);
+                            return redirect()->back()->with('not-uploaded', 'There was an Error When Uploading Your Photos');
+                        }
+
+                        // There's no associated notification for photo uploads, so no notification needs to be created.
+                    } catch (\Exception $e) {
+                        $thumbnailModel = $successfulStorage['thumbnailPhoto'];
+                        $this->deletePhotosFromThumbnail($thumbnailModel);
+                        return redirect()->back()->with('Error', $e->getMessage());
                     }
                 }
 
@@ -123,40 +147,54 @@ class PhotosController extends Controller
                      * If a profile picture or profile picture thumbnail was previously set for the current user,
                      * update the photo type ID of the photos to a regular profile picture and profile picture thumbnail.
                      */
-                    $previouslyActiveProfilePics = Photo::where(function($query) use ($profilePicPhoto, $currentUserID) {
-                        $query->where('type_id', '=', 5) // Active Profile Picture
-                            ->where('uploader_id', '=', $currentUserID)
-                            ->where('id', '!=', $profilePicPhoto->id);
-                    })->orWhere(function($query) use ($profilePicThumbnailPhoto, $currentUserID) {
-                        $query->where('type_id', '=', 6) // Active Profile Picture Thumbnail
-                            ->where('uploader_id', '=', $currentUserID)
-                            ->where('id', '!=', $profilePicThumbnailPhoto->id);
-                    })->get();
+                    $previouslyActiveProfilePics = Photo::deactivateProfilePicture($profilePicPhoto, $profilePicThumbnailPhoto, $currentUserID);
+                    $previousProfilePicChangedActivities = Activity::where('user1_id', '=', $currentUserID)
+                        ->where('updated_profile_picture_photo_id', '!=', null)->get();
 
-                    foreach ($previouslyActiveProfilePics as $previouslyActiveProfilePic) {
-                        if ($previouslyActiveProfilePic->type_id === 5) {
-                            $previouslyActiveProfilePic->type_id = 2;
-                            $previouslyActiveProfilePic->save();
-                        } elseif ($previouslyActiveProfilePic->type_id === 6) {
-                            $previouslyActiveProfilePic->type_id = 4;
-                            $previouslyActiveProfilePic->save();
-                        }
+                    // Create Activity for Changed Profile Picture
+                    $activity = new Activity();
+                    $activity->user1_id = $currentUserID;
+                    $activity->updated_profile_picture_photo_id = $profilePicPhoto->id;
+                    $activity->created_at = DB::raw('now()');
+
+                    if (!$activity->save()) {
+                        // Delete uploaded profile photo, associated thumbnail and remove both from the Photos table.
+                        $this->deletePhotosFromThumbnail($profilePicThumbnail);
+                        $uploadPhoto->delete(); // Attempt to delete a record anyway in case 1 out of the 4 photos are inserted correctly
+                        $thumbnailPhoto->delete(); // Attempt to delete the record anyway in case 1 out of the 4 photos are inserted correctly
+                        $profilePicPhoto->delete(); // Attempt to delete the record anyway in case 1 out of the 4 photos are inserted correctly
+                        $profilePicThumbnailPhoto->delete(); // Attempt to delete the record anyway in case 1 out of the 4 photos are inserted correctly
+
+                        // Revert back to the original profile pictures in the Photos DB table.
+                        Photo::revertDeactivatedProfilePicture($previouslyActiveProfilePics);
+
+                        return redirect()->back()->with('not-uploaded', 'There was an Error When Uploading Your Photos');
                     }
+
+                    // If an activity for profile-picture-changed previously existed for the current user, delete it.
+                    Activity::removePreviousProfilePictureChangedActivities($previousProfilePicChangedActivities);
 
                     return redirect()->back()->with('created', 'Your Profile Picture has Been Updated');
                 } else { // If one of the photos isn't inserted correctly...
+                    $this->deletePhotosFromThumbnail($profilePicThumbnailPhoto);
                     $uploadPhoto->delete(); // Attempt to delete a record anyway in case 1 out of the 4 photos are inserted correctly
                     $thumbnailPhoto->delete(); // Attempt to delete the record anyway in case 1 out of the 4 photos are inserted correctly
                     $profilePicPhoto->delete(); // Attempt to delete the record anyway in case 1 out of the 4 photos are inserted correctly
                     $profilePicThumbnailPhoto->delete(); // Attempt to delete the record anyway in case 1 out of the 4 photos are inserted correctly
+
                     return redirect()->back()->with('not-created', 'An Error Occurred when Updating your Profile Picture');
                 }
             } catch (\Exception $e) {
+                $this->deletePhotosFromThumbnail($thumbnailPhoto);
                 $uploadPhoto->delete(); // Attempt to delete a record anyway in case 1 out of the 4 photos are inserted correctly
                 $thumbnailPhoto->delete(); // Attempt to delete the record anyway in case 1 out of the 4 photos are inserted correctly
                 $profilePicPhoto->delete(); // Attempt to delete the record anyway in case 1 out of the 4 photos are inserted correctly
                 $profilePicThumbnailPhoto->delete(); // Attempt to delete the record anyway in case 1 out of the 4 photos are inserted correctly
-                return redirect()->back()->with('not-created', $e);
+
+                // Revert back to the original profile pictures in the Photos DB table.
+                Photo::revertDeactivatedProfilePicture($previouslyActiveProfilePics);
+
+                return redirect()->back()->with('not-created', $e->getMessage());
             }
         }
     }
@@ -184,7 +222,7 @@ class PhotosController extends Controller
         if ($thumbnail) {
             $baseFileName = $this->getBaseFileName($thumbnail);
 
-            // Search for the related thumbnail and store it in a variable.
+            // Search for the related base image upload and store it in a variable.
             $uploadFile = Photo::where('file_name', '=', $baseFileName);
 
             if ($uploadFile) {
@@ -223,27 +261,32 @@ class PhotosController extends Controller
                     $newProfilePicThumbnail->time_uploaded = DB::raw('now()');
 
                     if ($newProfilePic->save() && $newProfilePicThumbnail->save()) {
-                        // Update the previous active profile picture and profile picture thumbnail to inactive if they were set.
                         try {
-                            $previouslyActiveProfilePics = Photo::where(function ($query) use ($newProfilePic, $currentUserID) {
-                                $query->where('type_id', '=', 5)// Active Profile Picture
-                                ->where('uploader_id', '=', $currentUserID)
-                                    ->where('id', '!=', $newProfilePic->id);
-                            })->orWhere(function ($query) use ($newProfilePicThumbnail, $currentUserID) {
-                                $query->where('type_id', '=', 6)// Active Profile Picture Thumbnail
-                                ->where('uploader_id', '=', $currentUserID)
-                                    ->where('id', '!=', $newProfilePicThumbnail->id);
-                            })->get();
+                            // Update the previous active profile picture and profile picture thumbnail to inactive if they were set.
+                            $previouslyActiveProfilePics = Photo::deactivateProfilePicture($newProfilePic, $newProfilePicThumbnail, $currentUserID);
+                            $previousProfilePicChangedActivities = Activity::where('user1_id', '=', $currentUserID)
+                                ->where('updated_profile_picture_photo_id', '!=', null)->get();
 
-                            foreach ($previouslyActiveProfilePics as $previouslyActiveProfilePic) {
-                                if ($previouslyActiveProfilePic->type_id === 5) {
-                                    $previouslyActiveProfilePic->type_id = 2;
-                                    $previouslyActiveProfilePic->save();
-                                } elseif ($previouslyActiveProfilePic->type_id === 6) {
-                                    $previouslyActiveProfilePic->type_id = 4;
-                                    $previouslyActiveProfilePic->save();
-                                }
+                            // Create Activity for Changed Profile Picture
+                            $activity = new Activity();
+                            $activity->user1_id = $currentUserID;
+                            $activity->updated_profile_picture_photo_id = $newProfilePic->id;
+                            $activity->created_at = DB::raw('now()');
+
+                            if (!$activity->save()) {
+                                Storage::delete('public/' . $newProfilePic->file_name);
+                                Storage::delete('public/' . $newProfilePicThumbnail->file_name);
+                                $newProfilePic->delete();
+                                $newProfilePicThumbnail->delete();
+
+                                // Reverse the profile picture change.
+                                Photo::revertDeactivatedProfilePicture($previouslyActiveProfilePics);
+
+                                return redirect()->back()->with('not-uploaded', 'There was an Error When Uploading Your Photos');
                             }
+
+                            // If any activities for profile-picture-changed previously existed for the current user, delete them.
+                            Activity::removePreviousProfilePictureChangedActivities($previousProfilePicChangedActivities);
 
                             return redirect()->back()->with('updated', 'Your Profile Picture has been Updated');
                         } catch (\Exception $e) {
@@ -257,8 +300,17 @@ class PhotosController extends Controller
                             $newProfilePic->delete();
                             $newProfilePicThumbnail->delete();
 
+                            // Reverse the profile picture change.
+                            Photo::revertDeactivatedProfilePicture($previouslyActiveProfilePics);
+
                             return redirect()->back()->with('not-updated', $e->getMessage());
                         }
+                    } else {
+                        Storage::delete('public/' . $newProfilePic->file_name);
+                        Storage::delete('public/' . $newProfilePicThumbnail->file_name);
+
+                        return redirect()->back()->with('not-updated', 'There was an Error When Uploading Your Photos');
+
                     }
                 } elseif ($alreadyIsAProfilePic) {
                     // Update Photos table profile pic records to active profile picture and active profile picture thumbnail
@@ -268,25 +320,29 @@ class PhotosController extends Controller
                     if ($profilePic->save() && $profilePicThumbnail->save()) {
                         // Update the previous active profile picture and profile picture thumbnail to inactive if they were set.
                         try {
-                            $previouslyActiveProfilePics = Photo::where(function ($query) use ($profilePic, $currentUserID) {
-                                $query->where('type_id', '=', 5)// Active Profile Picture
-                                ->where('uploader_id', '=', $currentUserID)
-                                    ->where('id', '!=', $profilePic->id);
-                            })->orWhere(function ($query) use ($profilePicThumbnail, $currentUserID) {
-                                $query->where('type_id', '=', 6)// Active Profile Picture Thumbnail
-                                ->where('uploader_id', '=', $currentUserID)
-                                    ->where('id', '!=', $profilePicThumbnail->id);
-                            })->get();
+                            $previouslyActiveProfilePics = Photo::deactivateProfilePicture($profilePic, $profilePicThumbnail, $currentUserID);
+                            $previousProfilePicChangedActivities = Activity::where('user1_id', '=', $currentUserID)
+                                ->where('updated_profile_picture_photo_id', '!=', null)->get();
 
-                            foreach ($previouslyActiveProfilePics as $previouslyActiveProfilePic) {
-                                if ($previouslyActiveProfilePic->type_id === 5) {
-                                    $previouslyActiveProfilePic->type_id = 2;
-                                    $previouslyActiveProfilePic->save();
-                                } elseif ($previouslyActiveProfilePic->type_id === 6) {
-                                    $previouslyActiveProfilePic->type_id = 4;
-                                    $previouslyActiveProfilePic->save();
-                                }
+                            $activity = new Activity();
+                            $activity->user1_id = $currentUserID;
+                            $activity->updated_profile_picture_photo_id = $profilePic->id;
+                            $activity->created_at = DB::raw('now()');
+
+                            if (!$activity->save()) {
+                                // Reverse the profile picture change.
+                                Photo::revertDeactivatedProfilePicture($previouslyActiveProfilePics);
+
+                                $profilePicThumbnail->type_id = 4;
+                                $profilePicThumbnail->save();
+                                $profilePic->type_id = 2;
+                                $profilePic->save();
+
+                                return redirect()->back()->with('not-uploaded', 'There was an Error When Uploading Your Photos');
                             }
+
+                            // If an activity for profile-picture-changed previously existed for the current user, delete it.
+                            Activity::removePreviousProfilePictureChangedActivities($previousProfilePicChangedActivities);
 
                             return redirect()->back()->with('updated', 'Your Profile Picture has been Updated');
                         } catch (\Exception $e) {
@@ -295,6 +351,9 @@ class PhotosController extends Controller
                              * profile picture thumbnail type values back to an inactive profile picture/profile picture thumbnail in order to prevent any duplicate
                              * records of active profile pictures and active profile picture thumbnails for a user in the Photos DB table.
                              */
+                            // Reverse the profile picture change.
+                            Photo::revertDeactivatedProfilePicture($previouslyActiveProfilePics);
+
                             $profilePic->type_id = 2;
                             $profilePicThumbnail->type_id = 4;
                             $profilePic->save();
@@ -332,53 +391,57 @@ class PhotosController extends Controller
         $thumbnail = Photo::find($thumbnailPhotoID);
 
         if ($thumbnail) {
-            $baseFileName = $this->getBaseFileName($thumbnail);
-
-            // Search for any related photos (thumbnails, profile pictures, uploads) and store them in variables.
-            $uploadFileName = $baseFileName;
-            $thumbnailFileName = $thumbnail->file_name;
-            $profilePicFileName = $this->getAssociatedImagePath($baseFileName, 'profile-picture');
-            $profilePicThumbnailFileName = $this->getAssociatedImagePath($baseFileName, 'profile-picture-thumbnail');
-            $activeProfilePicFileName = $this->getAssociatedImagePath($baseFileName, 'active-profile-picture');
-            $activeProfilePicThumbnailFilename = $this->getAssociatedImagePath($baseFileName, 'active_profile-picture-thumbnail');
-
-            $upload = Photo::where('file_name', '=', $uploadFileName)->first();
-            $profilePic = Photo::where('file_name', '=', $profilePicFileName)->first();
-            $profilePicThumbnail = Photo::where('file_name', '=', $profilePicThumbnailFileName)->first();
-            $activeProfilePic = Photo::where('file_name', '=', $activeProfilePicFileName)->first();
-            $activeProfilePicThumbnail = Photo::where('file_name', '=', $activeProfilePicThumbnailFilename)->first();
-
-            // Delete the photos from storage if the filename exists.
-            $uploadDeleted = Storage::delete('public/' . $uploadFileName);
-            $thumbnailDeleted = Storage::delete('public/' . $thumbnailFileName);
-            $profilePicDeleted = Storage::delete('public/' . $profilePicFileName);
-            $profilePicThumbnailDeleted = Storage::delete('public/' . $profilePicThumbnailFileName);
-            $activeProfilePicDeleted = Storage::delete('public/' . $activeProfilePicFileName);
-            $activeProfilePicThumbnailDeleted = Storage::delete('public/' . $activeProfilePicThumbnailFilename);
-
-            // Remove each photo that was deleted from the DB.
-            if ($uploadDeleted) {
-                $upload->delete();
-            }
-            if ($thumbnailDeleted) {
-                $thumbnail->delete();
-            }
-            if ($profilePicDeleted) {
-                $profilePic->delete();
-            }
-            if ($profilePicThumbnailDeleted) {
-                $profilePicThumbnail->delete();
-            }
-            if ($activeProfilePicDeleted) {
-                $activeProfilePic->delete();
-            }
-            if ($activeProfilePicThumbnailDeleted) {
-                $activeProfilePicThumbnail->delete();
-            }
-
-            return redirect()->back()->with('deleted', 'Photo deleted');
+            return $this->deletePhotosFromThumbnail($thumbnail);
         } else {
             return redirect()->back()->with('not-deleted', 'An Error Occurred when Deleting the Photo');
         }
+    }
+
+    public function deletePhotosFromThumbnail(Photo $thumbnail) {
+        $baseFileName = $this->getBaseFileName($thumbnail);
+
+        // Search for any related photos (thumbnails, profile pictures, uploads) and store them in variables.
+        $uploadFileName = $baseFileName;
+        $thumbnailFileName = $thumbnail->file_name;
+        $profilePicFileName = $this->getAssociatedImagePath($baseFileName, 'profile-picture');
+        $profilePicThumbnailFileName = $this->getAssociatedImagePath($baseFileName, 'profile-picture-thumbnail');
+        $activeProfilePicFileName = $this->getAssociatedImagePath($baseFileName, 'active-profile-picture');
+        $activeProfilePicThumbnailFilename = $this->getAssociatedImagePath($baseFileName, 'active_profile-picture-thumbnail');
+
+        $upload = Photo::where('file_name', '=', $uploadFileName)->first();
+        $profilePic = Photo::where('file_name', '=', $profilePicFileName)->first();
+        $profilePicThumbnail = Photo::where('file_name', '=', $profilePicThumbnailFileName)->first();
+        $activeProfilePic = Photo::where('file_name', '=', $activeProfilePicFileName)->first();
+        $activeProfilePicThumbnail = Photo::where('file_name', '=', $activeProfilePicThumbnailFilename)->first();
+
+        // Delete the photos from storage if the filename exists.
+        $uploadDeleted = Storage::delete('public/' . $uploadFileName);
+        $thumbnailDeleted = Storage::delete('public/' . $thumbnailFileName);
+        $profilePicDeleted = Storage::delete('public/' . $profilePicFileName);
+        $profilePicThumbnailDeleted = Storage::delete('public/' . $profilePicThumbnailFileName);
+        $activeProfilePicDeleted = Storage::delete('public/' . $activeProfilePicFileName);
+        $activeProfilePicThumbnailDeleted = Storage::delete('public/' . $activeProfilePicThumbnailFilename);
+
+        // Remove each photo that was deleted from the DB.
+        if ($uploadDeleted) {
+            $upload->delete();
+        }
+        if ($thumbnailDeleted) {
+            $thumbnail->delete();
+        }
+        if ($profilePicDeleted) {
+            $profilePic->delete();
+        }
+        if ($profilePicThumbnailDeleted) {
+            $profilePicThumbnail->delete();
+        }
+        if ($activeProfilePicDeleted) {
+            $activeProfilePic->delete();
+        }
+        if ($activeProfilePicThumbnailDeleted) {
+            $activeProfilePicThumbnail->delete();
+        }
+
+        return redirect()->back()->with('deleted', 'Photo deleted');
     }
 }

@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\User;
 use App\FriendRequest;
 use App\Friendship;
+use App\Activity;
+use Illuminate\Support\Facades\DB;
+use App\Notification;
 
 class FriendRequestsController extends Controller
 {
@@ -96,8 +99,46 @@ class FriendRequestsController extends Controller
                     $friendship->user2_id = $targetUserID;
                     $friendship->created_at = date("Y-m-d");
                     if ($friendship->save()) {
-                        $friendRequest->delete();
-                        return redirect()->back()->with('accepted', 'Friend Added');
+                        $activity = new Activity();
+                        $activity->user1_id = $currentUserID;
+                        $activity->user2_id = $targetUserID;
+                        $activity->new_friendship_id = $friendship->id;
+                        $activity->created_at = DB::raw('now()');
+
+                        if (!$activity->save()) {
+                            $friendship->delete();
+                            return redirect()->back()->with('error', 'An error occurred. Please try again');
+                        } else {
+                            // Save Notification for the user that didn't accept the friend request (the one that isn't the current user).
+                            if ($friendship->user1_id === $currentUserID) {
+                                $otherFriendshipUserID = $friendship->user2_id;
+                            } elseif ($friendship->user2_id === $currentUserID) {
+                                $otherFriendshipUserID = $friendship->user1_id;
+                            } else {
+                                $otherFriendshipUserID = 0;
+                            }
+
+                            try {
+                                $notification = new Notification();
+                                $notification->user_id = $otherFriendshipUserID;
+                                $notification->type_id = 3; // friend-request-accepted.
+                                $notification->is_active = true;
+                                $notification->activity_id = $activity->id;
+
+                                if (!$notification->save()) {
+                                    $friendship->delete();
+                                    $activity->delete();
+                                    return redirect()->back()->with('error', 'An error occurred. Please try again');
+                                }
+                            } catch (\Exception $e) {
+                                $friendship->delete();
+                                $activity->delete();
+                                return redirect()->back()->with('error', 'An error occurred. Please try again');
+                            }
+
+                            $friendRequest->delete();
+                            return redirect()->back()->with('accepted', 'Friend Added');
+                        }
                     }
                 } else if ($friendshipExists) {
                     $friendRequest->delete();

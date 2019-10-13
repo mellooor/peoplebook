@@ -94,7 +94,11 @@ class User extends Authenticatable
     }
 
     public function activeProfilePictureThumbnail() {
-        return $this->hasMany('App\Photo', 'uploader_id')->where('type_id', 6)->first();
+        return $this->hasOne('App\Photo', 'uploader_id')->where('type_id', 6);
+    }
+
+    public function notifications() {
+        return $this->hasMany('App\Notification', 'user_id');
     }
 
     /*

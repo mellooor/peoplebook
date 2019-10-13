@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\User;
 
 class NotificationsController extends Controller
 {
@@ -13,7 +14,19 @@ class NotificationsController extends Controller
      */
     public function index()
     {
-        //
+        $currentUserID = \Auth::user()->id;
+
+        $notifications = User::find($currentUserID)->notifications;
+
+        $activeNotifications = $notifications->filter(function($notification) {
+           return $notification->is_active === 1;
+        });
+
+        foreach ($activeNotifications as $activeNotification) {
+            $activeNotification->hasBeenSeen();
+        }
+
+        return view('notifications')->with('notifications', $notifications);
     }
 
     /**
