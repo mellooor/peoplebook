@@ -5,6 +5,6 @@
                 became friends with
             <a href="{{ route('user', $newFriendship->user2->id) }}">{{ $newFriendship->user2->first_name }} {{ $newFriendship->user2->last_name }}</a>
         </p>
-        <small><b>{{ $newFriendship->created_at }}</b></small>
+        <small><b>{{ $newFriendship->createdAtDuration() }}</b></small>
     </div>
 </div>

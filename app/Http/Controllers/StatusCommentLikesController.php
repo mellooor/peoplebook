@@ -46,7 +46,7 @@ class StatusCommentLikesController extends Controller
                     $activity->user1_id = $commentLike->user_id;
                     $activity->user2_id = $comment->author_id;
                     $activity->status_comment_like_id = $commentLike->id;
-                    $activity->created_at = DB::raw('now()');
+                    $activity->created_at = date('Y-m-d H:i:s');
 
                     if (!$activity->save()) {
                         $commentLike->delete();

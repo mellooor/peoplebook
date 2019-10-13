@@ -6,7 +6,7 @@
             @else
                 <img src="../images/default_profile_picture-25x25.png"/>
             @endif
-            {{ $newFriendship->nonCurrentUser()->first_name }} {{ $newFriendship->nonCurrentUser()->last_name }} accepted your friend request. <small>59 minutes ago</small>
+            {{ $newFriendship->nonCurrentUser()->first_name }} {{ $newFriendship->nonCurrentUser()->last_name }} accepted your friend request. <small>{{ $newFriendship->activity->createdAtDuration() }}</small>
         </div>
     </div>
 </a>

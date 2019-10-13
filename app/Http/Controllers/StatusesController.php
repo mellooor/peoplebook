@@ -79,7 +79,7 @@ class StatusesController extends Controller
             $status = new Status();
             $status->author_id = $currentUserID;
             $status->content = $request->input('body');
-            $status->created_at = DB::raw('now()');
+            $status->created_at = date('Y-m-d H:i:s');
 
             // if status saved...
             if ($status->save()) {
@@ -88,7 +88,7 @@ class StatusesController extends Controller
                     $activity = new Activity();
                     $activity->user1_id = $status->author_id;
                     $activity->created_status_id = $status->id;
-                    $activity->created_at = DB::raw('now()');
+                    $activity->created_at = date('Y-m-d H:i:s');
 
                     if (!$activity->save()) {
                         $status->delete();
@@ -185,7 +185,7 @@ class StatusesController extends Controller
             // Verify that the current user is the author of the status.
             if ($status->author_id === $currentUserID) {
                 $status->content = $body;
-                $status->updated_at = DB::raw('now()');
+                $status->updated_at = date('Y-m-d H:i:s');
                 if ($status->save()) {
                     return redirect()->back()->with('updated', 'Post Updated');
                 } else {

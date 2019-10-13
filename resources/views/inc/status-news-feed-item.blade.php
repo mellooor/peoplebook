@@ -31,9 +31,10 @@
         @endforeach
         @endif
 
-        <small><b>{{ $status->created_at }}</b></small>
+        <small><b>{{ $status->createdAtDuration() }}</b></small>
+
         @if ($status->updated_at)
-        <small>(Edited <b>{{ $status->updated_at }}</b>)</small>
+        <small>(Edited <b>{{ $status->updatedAtDuration() }}</b>)</small>
         @endif
         <div class="row">
             <button class="btn btn-link" data-toggle="modal" data-target="#likes-modal">
@@ -96,9 +97,9 @@
                     <button class="btn btn-link status-comment-edit-btn" data-toggle="modal" data-target="#status-comment-edit-modal" data-status-id="{{ $status->id }}" data-comment-id="{{ $comment->id }}">Edit</button>
                     <button class="btn btn-link status-comment-delete-btn" data-toggle="modal" data-target="#status-comment-delete-confirm" data-status-id="{{ $status->id }}" data-comment-id="{{ $comment->id }}">Delete</button>
                     @endif
-                    <small>{{ $comment->created_at }}</small>
+                    <small>{{ $comment->createdAtDuration() }}</small>
                     @if ($comment->updated_at)
-                    <small>(<b>Edited:{{ $comment->updated_at }}</b>)</small>
+                    <small>(<b>Edited:{{ $comment->updatedAtDuration() }}</b>)</small>
                     @endif
                 </div>
             </div>

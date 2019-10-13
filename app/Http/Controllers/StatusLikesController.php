@@ -45,7 +45,7 @@ class StatusLikesController extends Controller
                     $activity->user1_id = $statusLike->user_id;
                     $activity->user2_id = $status->author_id;
                     $activity->status_like_id = $statusLike->id;
-                    $activity->created_at = DB::raw('now()');
+                    $activity->created_at = date('Y-m-d H:i:s');
 
                     if (!$activity->save()) {
                         $statusLike->delete();

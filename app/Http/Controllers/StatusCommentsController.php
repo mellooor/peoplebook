@@ -54,7 +54,7 @@ class StatusCommentsController extends Controller
             $statusComment->author_id = $currentUserID;
             $statusComment->status_id = $status->id;
             $statusComment->content = $comment;
-            $statusComment->created_at = DB::raw('now()');
+            $statusComment->created_at = date('Y-m-d H:i:s');
 
             if (!$statusComment->save()) {
                 return redirect()->back()->with('not-commented', 'An Error Occurred when Adding the Comment. Please try Again');
@@ -66,7 +66,7 @@ class StatusCommentsController extends Controller
                 $activity->user1_id = $statusComment->author_id;
                 $activity->user2_id = $status->author_id;
                 $activity->status_comment_id = $statusComment->id;
-                $activity->created_at = DB::raw('now()');
+                $activity->created_at = date('Y-m-d H:i:s');
 
                 if (!$activity->save()) {
                     $statusComment->delete();
@@ -154,7 +154,7 @@ class StatusCommentsController extends Controller
                 // If the current user ID matches the author ID of the comment that is being edited.
                 if ($statusComment->author_id === $currentUserID) {
                     $statusComment->content = $comment;
-                    $statusComment->updated_at = DB::raw('now()');
+                    $statusComment->updated_at = date('Y-m-d H:i:s');
 
                     // If the comment updates successfully.
                     if ($statusComment->save()) {

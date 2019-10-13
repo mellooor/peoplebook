@@ -6,7 +6,7 @@
             @else
                 <img src="../images/default_profile_picture-25x25.png"/>
             @endif
-            {{ $commentLike->liker->first_name }} {{ $commentLike->liker->last_name }} liked your comment. <small>59 minutes ago</small>
+            {{ $commentLike->liker->first_name }} {{ $commentLike->liker->last_name }} liked your comment. <small>{{ $commentLike->activity->createdAtDuration() }}</small>
         </div>
     </div>
 </a>

@@ -2,11 +2,14 @@
 
 namespace App;
 
+use App\Traits\FormatDateTrait;
 use Illuminate\Database\Eloquent\Model;
+use App\Library\DateTime as PeopleBookDateTime;
 
 class Status extends Model
 {
     public $timestamps = false;
+    protected $dates = ['created_at', 'updated_at'];
 
     public function author() {
         return $this->belongsTo('App\User', 'author_id');
@@ -41,5 +44,21 @@ class Status extends Model
         } else {
             return false;
         }
+    }
+
+    /*
+     * Returns the duration up to now since the status was created in a format set in the Peoplebook
+     * DateTime class.
+     */
+    public function createdAtDuration() {
+        return PeopleBookDateTime::formatDuration($this->created_at);
+    }
+
+    /*
+     * Returns the duration up to now since the status was edited in a format set in the Peoplebook
+     * DateTime class.
+     */
+    public function updatedAtDuration() {
+        return PeopleBookDateTime::formatDuration($this->updated_at);
     }
 }

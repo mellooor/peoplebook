@@ -2,16 +2,20 @@
 
 namespace App;
 
+use App\Traits\FormatDateTrait;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
+use App\Library\DateTime as PeopleBookDateTime;
 
 class User extends Authenticatable
 {
     use Notifiable;
+
     public $timestamps = false;
+    protected $dates = ['date_of_birth', 'date_created'];
 
     /**
      * The attributes that are mass assignable.
@@ -283,5 +287,21 @@ class User extends Authenticatable
         } else {
             return User::find(Auth::user()->id);
         }
+    }
+
+    /*
+     * Returns the date of birth for the user in a format set in the Peoplebook
+     * DateTime class.
+     */
+    public function formattedDateOfBirth() {
+        return PeopleBookDateTime::formatDateOfBirth($this->date_of_birth);
+    }
+
+    /*
+     * Returns the duration up to now since the user was created in a format set in the Peoplebook
+     * DateTime class.
+     */
+    public function createdAtDuration() {
+        return PeopleBookDateTime::formatDuration($this->date_created);
     }
 }

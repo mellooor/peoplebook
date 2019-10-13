@@ -6,7 +6,7 @@
             @else
                 <img src="../images/default_profile_picture-25x25.png"/>
             @endif
-            {{ $statusLike->liker->first_name }} {{ $statusLike->liker->last_name }} liked your status. <small>59 minutes ago</small>
+            {{ $statusLike->liker->first_name }} {{ $statusLike->liker->last_name }} liked your status. <small>{{ $statusLike->activity->createdAtDuration() }}</small>
         </div>
     </div>
 </a>

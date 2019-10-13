@@ -2,12 +2,15 @@
 
 namespace App;
 
+use App\Traits\FormatDateTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use App\Library\DateTime as PeopleBookDateTime;
 
 class Activity extends Model
 {
     public $timestamps = false;
+    protected $dates = ['created_at'];
 
     public function isCreatedStatus() {
         return ($this->created_status_id) ? $this->createdStatus : null;
@@ -71,5 +74,13 @@ class Activity extends Model
                 $previousProfilePicChangedActivity->delete();
             }
         }
+    }
+
+    /*
+     * Returns the duration up to now since the activity was created in a format set in the Peoplebook
+     * DateTime class.
+     */
+    public function createdAtDuration() {
+        return PeopleBookDateTime::formatDuration($this->created_at);
     }
 }

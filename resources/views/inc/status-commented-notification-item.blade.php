@@ -6,7 +6,7 @@
             @else
                 <img src="../images/default_profile_picture-25x25.png"/>
             @endif
-            {{ $statusComment->commenter->first_name }} {{ $statusComment->commenter->last_name }} commented on your status. <small>59 minutes ago</small>
+            {{ $statusComment->commenter->first_name }} {{ $statusComment->commenter->last_name }} commented on your status. <small>{{ $statusComment->activity->createdAtDuration() }}</small>
         </div>
     </div>
 </a>

@@ -66,7 +66,7 @@ class PhotosController extends Controller
                         $activity = new Activity();
                         $activity->user1_id = $uploadModel->uploader_id;
                         $activity->uploaded_photo_id = $uploadModel->id;
-                        $activity->created_at = DB::raw('now()');
+                        $activity->created_at = date('Y-m-d H:i:s');
 
                         if (!$activity->save()) {
                             // Delete upload photo, associated thumbnail and remove both from the Photos table.
@@ -121,25 +121,25 @@ class PhotosController extends Controller
             $uploadPhoto->file_name = $uploadedImage->basename;
             //$uploadPhoto->caption = '';
             $uploadPhoto->type_id = 1; // Upload
-            $uploadPhoto->time_uploaded = DB::raw('now()');
+            $uploadPhoto->time_uploaded = date('Y-m-d H:i:s');
 
             $thumbnailPhoto = new Photo();
             $thumbnailPhoto->uploader_id = $currentUserID;
             $thumbnailPhoto->file_name = $thumbnailImage->basename;
             $thumbnailPhoto->type_id = 3; // Thumbnail
-            $thumbnailPhoto->time_uploaded = DB::raw('now()');
+            $thumbnailPhoto->time_uploaded = date('Y-m-d H:i:s');
 
             $profilePicPhoto = new Photo();
             $profilePicPhoto->uploader_id = $currentUserID;
             $profilePicPhoto->file_name = $profilePic->basename;
             $profilePicPhoto->type_id = 5; // Active Profile Picture
-            $profilePicPhoto->time_uploaded = DB::raw('now()');
+            $profilePicPhoto->time_uploaded = date('Y-m-d H:i:s');
 
             $profilePicThumbnailPhoto = new Photo();
             $profilePicThumbnailPhoto->uploader_id = $currentUserID;
             $profilePicThumbnailPhoto->file_name = $profilePicThumbnail->basename;
             $profilePicThumbnailPhoto->type_id = 6; // Active Profile Picture Thumbnail
-            $profilePicThumbnailPhoto->time_uploaded = DB::raw('now()');
+            $profilePicThumbnailPhoto->time_uploaded = date('Y-m-d H:i:s');
 
             try {
                 if ($uploadPhoto->save() && $thumbnailPhoto->save() && $profilePicPhoto->save() && $profilePicThumbnailPhoto->save()) {
@@ -155,7 +155,7 @@ class PhotosController extends Controller
                     $activity = new Activity();
                     $activity->user1_id = $currentUserID;
                     $activity->updated_profile_picture_photo_id = $profilePicPhoto->id;
-                    $activity->created_at = DB::raw('now()');
+                    $activity->created_at = date('Y-m-d H:i:s');
 
                     if (!$activity->save()) {
                         // Delete uploaded profile photo, associated thumbnail and remove both from the Photos table.
@@ -252,13 +252,13 @@ class PhotosController extends Controller
                     $newProfilePic->uploader_id = $currentUserID;
                     $newProfilePic->file_name = $profilePic->basename;
                     $newProfilePic->type_id = 5;
-                    $newProfilePic->time_uploaded = DB::raw('now()');
+                    $newProfilePic->time_uploaded = date('Y-m-d H:i:s');
 
                     $newProfilePicThumbnail = new Photo();
                     $newProfilePicThumbnail->uploader_id = $currentUserID;
                     $newProfilePicThumbnail->file_name = $profilePicThumbnail->basename;
                     $newProfilePicThumbnail->type_id = 6;
-                    $newProfilePicThumbnail->time_uploaded = DB::raw('now()');
+                    $newProfilePicThumbnail->time_uploaded = date('Y-m-d H:i:s');
 
                     if ($newProfilePic->save() && $newProfilePicThumbnail->save()) {
                         try {
@@ -271,7 +271,7 @@ class PhotosController extends Controller
                             $activity = new Activity();
                             $activity->user1_id = $currentUserID;
                             $activity->updated_profile_picture_photo_id = $newProfilePic->id;
-                            $activity->created_at = DB::raw('now()');
+                            $activity->created_at = date('Y-m-d H:i:s');
 
                             if (!$activity->save()) {
                                 Storage::delete('public/' . $newProfilePic->file_name);
@@ -327,7 +327,7 @@ class PhotosController extends Controller
                             $activity = new Activity();
                             $activity->user1_id = $currentUserID;
                             $activity->updated_profile_picture_photo_id = $profilePic->id;
-                            $activity->created_at = DB::raw('now()');
+                            $activity->created_at = date('Y-m-d H:i:s');
 
                             if (!$activity->save()) {
                                 // Reverse the profile picture change.

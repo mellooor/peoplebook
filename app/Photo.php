@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Traits\FormatDateTrait;
 use Illuminate\Database\Eloquent\Model;
 use App\StatusPhoto;
 use App\Status;
@@ -10,10 +11,12 @@ use Intervention\Image\Image;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use App\Library\DateTime as PeopleBookDateTime;
 
 class Photo extends Model
 {
     public $timestamps = false;
+    protected $dates = ['time_uploaded'];
 
     public function uploader() {
         return $this->belongsTo('App\User', 'uploader_id');
@@ -64,5 +67,13 @@ class Photo extends Model
                 $previouslyActiveProfilePic->save();
             }
         }
+    }
+
+    /*
+     * Returns the duration up to now since the photo was uploaded in a format set in the Peoplebook
+     * DateTime class.
+     */
+    public function timeUploadedDuration() {
+        return PeopleBookDateTime::formatDuration($this->time_uploaded);
     }
 }

@@ -24,7 +24,7 @@
             <img src="{{ $photo->getFullURL() }}"/>
         </a>
 
-        <small><b>{{ $photo->time_uploaded }}</b></small>
+        <small><b>{{ $photo->timeUploadedDuration() }}</b></small>
 
         <form action="{{ route('add-comment') }}" method="post">
             @csrf

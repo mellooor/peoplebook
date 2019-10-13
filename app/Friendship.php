@@ -2,11 +2,14 @@
 
 namespace App;
 
+use App\Traits\FormatDateTrait;
 use Illuminate\Database\Eloquent\Model;
+use App\Library\DateTime as PeopleBookDateTime;
 
 class Friendship extends Model
 {
     public $timestamps = false;
+    protected $dates = ['created_at'];
 
     public function user1() {
         return $this->belongsTo('App\User', 'user1_id');
@@ -14,6 +17,10 @@ class Friendship extends Model
 
     public function user2() {
         return $this->belongsTo('App\User', 'user2_id');
+    }
+
+    public function activity() {
+        return $this->hasOne('App\Activity', 'new_friendship_id');
     }
 
     /*
@@ -57,5 +64,13 @@ class Friendship extends Model
         } else {
             return 0;
         }
+    }
+
+    /*
+     * Returns the duration up to now since the friendship was created in a format set in the Peoplebook
+     * DateTime class.
+     */
+    public function createdAtDuration() {
+        return PeopleBookDateTime::formatDuration($this->created_at);
     }
 }

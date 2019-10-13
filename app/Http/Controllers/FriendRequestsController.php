@@ -103,7 +103,7 @@ class FriendRequestsController extends Controller
                         $activity->user1_id = $currentUserID;
                         $activity->user2_id = $targetUserID;
                         $activity->new_friendship_id = $friendship->id;
-                        $activity->created_at = DB::raw('now()');
+                        $activity->created_at = date('Y-m-d H:i:s');
 
                         if (!$activity->save()) {
                             $friendship->delete();

@@ -16,7 +16,7 @@ class NotificationsController extends Controller
     {
         $currentUserID = \Auth::user()->id;
 
-        $notifications = User::find($currentUserID)->notifications;
+        $notifications = User::find($currentUserID)->notifications->sortByDesc('id');
 
         $activeNotifications = $notifications->filter(function($notification) {
            return $notification->is_active === 1;
