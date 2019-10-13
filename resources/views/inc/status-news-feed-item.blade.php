@@ -16,7 +16,7 @@
                 {{--<a class="dropdown-item" href="#">Show to All Users <i class="fas fa-check"></i></a>--}}
                 {{--<a class="dropdown-item" href="#">Show to Friends Only</a>--}}
             {{--</div>--}}
-            {{--@if ($data['currentUser'] === $status->author)--}}
+            {{--@if ($data['user'] === $status->author)--}}
             {{--<button class="btn btn-warning edit-status-btn" data-toggle="modal" data-target="#status-edit-modal" data-status-id="{{ $status->id }}"><i class="fas fa-pencil-alt"></i></button>--}}
             {{--<button class="btn btn-danger" data-toggle="modal" data-target="#status-delete-confirm" data-status-id="{{ $status->id }}"><i class="fas fa-trash-alt"></i></button>--}}
             {{--@endif--}}
@@ -47,11 +47,11 @@
             </button>
         </div>
         <div class="row">
-            @if ($status->likes->contains('user_id', $data['currentUser']->id))
+            @if ($status->likes->contains('user_id', $data['user']->id))
             <form action="{{ route('unlike-status') }}" method="post">
                 @csrf
                 @method('DELETE')
-                <input type="hidden" name="status-like-id" value="{{ $status->likes->firstWhere('user_id', $data['currentUser']->id)->id }}"/>
+                <input type="hidden" name="status-like-id" value="{{ $status->likes->firstWhere('user_id', $data['user']->id)->id }}"/>
                 <button type="submit" class="btn btn-link">Unlike</button>
             </form>
             @else
@@ -77,12 +77,12 @@
                     <p class="card-text">{{ $comment->content }}</p>
                     <b>({{ count($comment->likes) }} like)</b>
 
-                    @if ( $comment->likes->contains('user_id', $data['currentUser']->id))
+                    @if ( $comment->likes->contains('user_id', $data['user']->id))
                     <form action="{{ route('unlike-comment') }}" method="post">
                         @csrf
                         @method('DELETE')
                         <input type="hidden" name="comment-id" value="{{ $comment->id }}"/>
-                        <input type="hidden" name="comment-like-id" value="{{ $comment->likes->firstWhere('user_id', $data['currentUser']->id) }}"/>
+                        <input type="hidden" name="comment-like-id" value="{{ $comment->likes->firstWhere('user_id', $data['user']->id) }}"/>
                         <button type="submit" class="btn btn-link">Unlike</button>
                     </form>
                     @else
@@ -93,7 +93,7 @@
                     </form>
                     @endif
 
-                    @if ($comment->author_id === $data['currentUser']->id)
+                    @if ($comment->author_id === $data['user']->id)
                     <button class="btn btn-link status-comment-edit-btn" data-toggle="modal" data-target="#status-comment-edit-modal" data-status-id="{{ $status->id }}" data-comment-id="{{ $comment->id }}">Edit</button>
                     <button class="btn btn-link status-comment-delete-btn" data-toggle="modal" data-target="#status-comment-delete-confirm" data-status-id="{{ $status->id }}" data-comment-id="{{ $comment->id }}">Delete</button>
                     @endif

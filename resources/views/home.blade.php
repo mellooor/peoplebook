@@ -39,7 +39,8 @@
                     @endif
                     <br>
                 @endforeach
-            @else
+                {{ $data['newsFeedItems']->links() }}
+                @else
                 <h2>No Statuses to Show!</h2>
             @endif
         </div>

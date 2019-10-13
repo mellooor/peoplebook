@@ -15,7 +15,23 @@ class pagesController extends Controller
 
     public function user($id = null) {
         if ($user = User::getFromRouteParameter($id)) {
-            return view('user')->with('user', $user);
+            $data = ['user' => $user];
+
+            $data['newsFeedItems'] = Activity::where(function($q) use ($user) {
+                /*
+                 * Get all activities for a user where the activity is one for a status being created, a photo
+                 * being uploaded, a profile picture being changed or a new friendship.
+                 */
+                $q->where('user1_id', '=', $user->id)
+                    ->orWhere('user2_id', '=', $user->id);
+            })->where(function($q) {
+                    $q->where('created_status_id', '!=', null)
+                        ->orWhere('uploaded_photo_id', '!=', null)
+                        ->orWhere('updated_profile_picture_photo_id', '!=', null)
+                        ->orWhere('new_friendship_id', '!=', null);
+                })->orderBy('created_at', 'DESC')->paginate(5);
+
+            return view('user')->with('data', $data);
         } else {
             return redirect()->route('home');
         }
@@ -105,7 +121,7 @@ class pagesController extends Controller
                     ->orWhere('new_friendship_id', '!=', null);
             })->orderBy('created_at', 'DESC')->paginate(10);
 
-            $data['currentUser'] = $currentUser;
+            $data['user'] = $currentUser;
 
 
             return view('home')->with('data', $data);
