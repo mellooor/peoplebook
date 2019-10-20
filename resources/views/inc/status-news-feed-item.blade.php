@@ -27,7 +27,9 @@
 
         @if (count($status->photos) > 0)
         @foreach ($status->photos as $photo)
-        <img src="{{ $photo->information->getFullURL() }}"/>
+            <a href="{{ $photo->information->getAssociatedPhoto('original-upload')->getFullURL() }}">
+                <img src="{{ $photo->information->getAssociatedPhoto('thumbnail')->getFullURL() }}"/>
+            </a>
         @endforeach
         @endif
 

@@ -6,6 +6,7 @@ namespace App\Traits;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image as InterventionImage;
 use Intervention\Image\Facades\Image as InterventionImageFacade;
+use App\Photo;
 
 trait ImageUploadTrait
 {
@@ -169,5 +170,25 @@ trait ImageUploadTrait
         $imageYSize = $image->height();
 
         return $imageXSize / $imageYSize;
+    }
+
+    /*
+     * Creates an image path to be stored in the Photos DB table based on the base filename which matches the chosen image type.
+     * I.e. the profile picture file path for "foobar.jpeg" would be "storage/foobar_320x320.jpeg".
+     *
+     * @param string $basename - The base filename (the filename for the originally uploaded image).
+     * @param string $imageType - The type of the image that the user requires the image path for.
+     *
+     * @return string - The file path for the type of image chosen by the user.
+     */
+    public function createImagePath(string $basename, string $imageType) {
+        $imageTypeArray = array_keys(Photo::fixedImageAffixes);
+
+        if (in_array($imageType, $imageTypeArray)) {
+            $imageFileNameWithoutExtension = pathinfo($basename, PATHINFO_FILENAME);
+            $imageFileExtension = pathinfo($basename, PATHINFO_EXTENSION);
+
+            return 'storage/' . $imageFileNameWithoutExtension . Photo::fixedImageAffixes[$imageType] . '.' . $imageFileExtension;
+        }
     }
 }

@@ -20,8 +20,8 @@
         {{--</div>--}}
     </div>
     <div class="card-body">
-        <a href="{{ $photo->getFullURL() }}">
-            <img src="{{ $photo->getFullURL() }}"/>
+        <a href="{{ $photo->getAssociatedPhoto('original-upload')->getFullURL() }}">
+            <img src="{{ $photo->getAssociatedPhoto('thumbnail')->getFullURL() }}"/>
         </a>
 
         <small><b>{{ $photo->timeUploadedDuration() }}</b></small>

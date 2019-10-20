@@ -30,13 +30,13 @@ trait StoreUploadAndThumbnailTrait
         $uploadPhoto->file_name = $uploadedImage->basename;
         //$uploadPhoto->caption = '';
         $uploadPhoto->type_id = 1;
-        $uploadPhoto->time_uploaded = DB::raw('now()');
+        $uploadPhoto->time_uploaded = date('Y-m-d H:i:s');
 
         $thumbnailPhoto = new Photo();
         $thumbnailPhoto->uploader_id = $currentUserID;
         $thumbnailPhoto->file_name = $thumbnailImage->basename;
         $thumbnailPhoto->type_id = 3;
-        $thumbnailPhoto->time_uploaded = DB::raw('now()');
+        $thumbnailPhoto->time_uploaded = date('Y-m-d H:i:s');
 
         if ($uploadPhoto->save() && $thumbnailPhoto->save()) {
             $array = [

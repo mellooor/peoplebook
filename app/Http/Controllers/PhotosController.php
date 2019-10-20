@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\User;
-use App\Traits\ImagePathsTrait;
 use App\Traits\ImageUploadTrait;
 use Illuminate\Support\Facades\Auth;
 use App\Photo;
@@ -16,7 +15,6 @@ use App\Activity;
 
 class PhotosController extends Controller
 {
-    use ImagePathsTrait;
     use ImageUploadTrait;
     use StoreUploadAndThumbnailTrait;
 
@@ -159,7 +157,7 @@ class PhotosController extends Controller
 
                     if (!$activity->save()) {
                         // Delete uploaded profile photo, associated thumbnail and remove both from the Photos table.
-                        $this->deletePhotosFromThumbnail($profilePicThumbnail);
+                        $this->deletePhotosFromThumbnail($profilePicThumbnailPhoto);
                         $uploadPhoto->delete(); // Attempt to delete a record anyway in case 1 out of the 4 photos are inserted correctly
                         $thumbnailPhoto->delete(); // Attempt to delete the record anyway in case 1 out of the 4 photos are inserted correctly
                         $profilePicPhoto->delete(); // Attempt to delete the record anyway in case 1 out of the 4 photos are inserted correctly
@@ -220,7 +218,7 @@ class PhotosController extends Controller
         $thumbnail = Photo::find($request->input('thumbnail-id'));
 
         if ($thumbnail) {
-            $baseFileName = $this->getBaseFileName($thumbnail);
+            $baseFileName = $thumbnail->getBaseFileName();
 
             // Search for the related base image upload and store it in a variable.
             $uploadFile = Photo::where('file_name', '=', $baseFileName);
@@ -229,15 +227,10 @@ class PhotosController extends Controller
                 $currentUserID = Auth::user()->id;
 
                 // Check to see if the current image already has a profile picture/profile picture thumbnail uploaded + stored in the DB.
-                $profilePicFilePath = $this->getAssociatedImagePath($baseFileName, 'profile-picture');
-                $profilePicThumbnailFilePath = $this->getAssociatedImagePath($baseFileName, 'profile-picture-thumbnail');
-                $activeProfilePicFilePath = $this->getAssociatedImagePath($baseFileName, 'active-profile-picture');
-                $activeProfilePicThumbnailFilePath = $this->getAssociatedImagePath($baseFileName, 'active-profile-picture-thumbnail');
-
-                $profilePic = Photo::where('file_name', '=', $profilePicFilePath)->first();
-                $profilePicThumbnail = Photo::where('file_name', '=', $profilePicThumbnailFilePath)->first();
-                $activeProfilePic = Photo::where('file_name', '=', $activeProfilePicFilePath)->first();
-                $activeProfilePicThumbnail = Photo::where('file_name', '=', $activeProfilePicThumbnailFilePath)->first();
+                $profilePic = $thumbnail->getAssociatedPhoto('profile-picture');
+                $profilePicThumbnail = $thumbnail->getAssociatedPhoto('profile-picture-thumbnail');
+                $activeProfilePic = $thumbnail->getAssociatedPhoto('active-profile-picture');
+                $activeProfilePicThumbnail = $thumbnail->getAssociatedPhoto('active-profile-picture-thumbnail');
 
                 $alreadyIsAProfilePic = ($profilePic && $profilePicThumbnail);
                 $alreadyIsActiveProfilePic = ($activeProfilePic && $activeProfilePicThumbnail);
@@ -398,29 +391,20 @@ class PhotosController extends Controller
     }
 
     public function deletePhotosFromThumbnail(Photo $thumbnail) {
-        $baseFileName = $this->getBaseFileName($thumbnail);
-
         // Search for any related photos (thumbnails, profile pictures, uploads) and store them in variables.
-        $uploadFileName = $baseFileName;
-        $thumbnailFileName = $thumbnail->file_name;
-        $profilePicFileName = $this->getAssociatedImagePath($baseFileName, 'profile-picture');
-        $profilePicThumbnailFileName = $this->getAssociatedImagePath($baseFileName, 'profile-picture-thumbnail');
-        $activeProfilePicFileName = $this->getAssociatedImagePath($baseFileName, 'active-profile-picture');
-        $activeProfilePicThumbnailFilename = $this->getAssociatedImagePath($baseFileName, 'active_profile-picture-thumbnail');
-
-        $upload = Photo::where('file_name', '=', $uploadFileName)->first();
-        $profilePic = Photo::where('file_name', '=', $profilePicFileName)->first();
-        $profilePicThumbnail = Photo::where('file_name', '=', $profilePicThumbnailFileName)->first();
-        $activeProfilePic = Photo::where('file_name', '=', $activeProfilePicFileName)->first();
-        $activeProfilePicThumbnail = Photo::where('file_name', '=', $activeProfilePicThumbnailFilename)->first();
+        $upload = $thumbnail->getAssociatedPhoto('original-upload');
+        $profilePic = $thumbnail->getAssociatedPhoto('profile-picture');
+        $profilePicThumbnail = $thumbnail->getAssociatedPhoto('profile-picture-thumbnail');
+        $activeProfilePic = $thumbnail->getAssociatedPhoto('active-profile-picture');
+        $activeProfilePicThumbnail = $thumbnail->getAssociatedPhoto('active-profile-picture-thumbnail');
 
         // Delete the photos from storage if the filename exists.
-        $uploadDeleted = Storage::delete('public/' . $uploadFileName);
-        $thumbnailDeleted = Storage::delete('public/' . $thumbnailFileName);
-        $profilePicDeleted = Storage::delete('public/' . $profilePicFileName);
-        $profilePicThumbnailDeleted = Storage::delete('public/' . $profilePicThumbnailFileName);
-        $activeProfilePicDeleted = Storage::delete('public/' . $activeProfilePicFileName);
-        $activeProfilePicThumbnailDeleted = Storage::delete('public/' . $activeProfilePicThumbnailFilename);
+        $uploadDeleted = ($upload) ? Storage::delete('public/' . $upload->file_name) : false;
+        $thumbnailDeleted = ($thumbnail) ? Storage::delete('public/' . $thumbnail->file_name) : false;
+        $profilePicDeleted = ($profilePic) ? Storage::delete('public/' . $profilePic->file_name) : false;
+        $profilePicThumbnailDeleted = ($profilePicThumbnail) ? Storage::delete('public/' . $profilePicThumbnail->file_name) : false;
+        $activeProfilePicDeleted = ($activeProfilePic) ? Storage::delete('public/' . $activeProfilePic->file_name) : false;
+        $activeProfilePicThumbnailDeleted = ($activeProfilePicThumbnail) ? Storage::delete('public/' . $activeProfilePicThumbnail->file_name) : false;
 
         // Remove each photo that was deleted from the DB.
         if ($uploadDeleted) {
