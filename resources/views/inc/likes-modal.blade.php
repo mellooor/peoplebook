@@ -11,7 +11,7 @@
                 <div class="card user">
                     <div class="card user-request">
                         <div class="card-body d-flex">
-                            <button class="btn"><a href="{{ route('user') }}"><img src="/images/default_profile_picture-50x50.png"/>User 12</a></button>
+                            <button class="btn"><a href="{{ route('user', 3) }}"><img src="/images/default_profile_picture-50x50.png"/>User 12</a></button>
                             <form class="options ml-auto d-flex">
                                 <button type="submit" name="accept" class="btn btn-primary mx-auto my-auto">Friends</button>
                             </form>
@@ -19,7 +19,7 @@
                     </div>
                     <div class="card user-request">
                         <div class="card-body d-flex">
-                            <button class="btn"><a href="{{ route('user') }}"><img src="/images/default_profile_picture-50x50.png"/>User 12</a></button>
+                            <button class="btn"><a href="{{ route('user', 3) }}"><img src="/images/default_profile_picture-50x50.png"/>User 12</a></button>
                             <form class="options ml-auto d-flex">
                                 <button type="submit" name="accept" class="btn btn-success mx-auto my-auto">Add</button>
                             </form>

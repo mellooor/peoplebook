@@ -21,8 +21,13 @@
 
             <div id="user-menu">
                 <div class="card">
-                    <a class="btn" href="{{ route('user-more-info', $data['user']->id) }}"><img class="card-img-top" src="/images/ellipsis-icon_256x256.png" alt="Card image cap"></a>
-                    <a class="btn" href="{{ route('user-more-info', $data['user']->id) }}">
+                    @if ($data['user']->id === Auth::user()->id)
+                        <a class="btn" href="{{ route('my-profile-more-info') }}"><img class="card-img-top" src="/images/ellipsis-icon_256x256.png" alt="Card image cap"></a>
+                        <a class="btn" href="{{ route('my-profile-more-info') }}">
+                    @else
+                        <a class="btn" href="{{ route('user-more-info', $data['user']->id) }}"><img class="card-img-top" src="/images/ellipsis-icon_256x256.png" alt="Card image cap"></a>
+                        <a class="btn" href="{{ route('user-more-info', $data['user']->id) }}">
+                    @endif
                         <div class="card-body">
                             <p class="card-text">More Information</p>
                         </div>

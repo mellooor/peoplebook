@@ -105,6 +105,58 @@ class User extends Authenticatable
         return $this->hasMany('App\Notification', 'user_id');
     }
 
+    public function homeTown() {
+        return $this->belongsTo('App\Place', 'home_town_id');
+    }
+
+    public function currentTown() {
+        return $this->belongsTo('App\Place', 'current_town_id');
+    }
+
+    public function currentSchool() {
+        return $this->belongsTo('App\School', 'current_school_id');
+    }
+
+    public function currentJob() {
+        return $this->belongsTo('App\Job', 'current_job_id');
+    }
+
+    protected function relationshipUser1() {
+        return $this->hasOne('App\Relationship', 'user1_id');
+    }
+
+    protected function relationshipUser2() {
+        return $this->hasOne('App\Relationship', 'user2_id');
+    }
+
+    public function relationshipRequestUser1() {
+        return $this->hasOne('App\RelationshipRequest', 'user1_id');
+    }
+
+    public function relationshipRequestUser2() {
+        return $this->hasOne('App\RelationshipRequest', 'user2_id');
+    }
+
+    public function relationship() {
+        if ($this->relationshipUser1) {
+            return $this->relationshipUser1;
+        } elseif ($this->relationshipUser2) {
+            return $this->relationshipUser2;
+        } else {
+            return null;
+        }
+    }
+
+    public function relationshipRequest() {
+        if ($this->relationshipRequestUser1()) {
+            return $this->relationshipRequestUser1();
+        } elseif ($this->relationshipRequestUser2()) {
+            return $this->relationshipRequestUser2();
+        } else {
+            return null;
+        }
+    }
+
     /*
      * Returns an array of all of the userIDs of the friends of a user's friends that aren't the user themselves
      * nor a user that the current user is already friends with.

@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\PlaceName;
 use Illuminate\Http\Request;
 
-class EventTypesController extends Controller
+class PlaceNamesController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +35,25 @@ class EventTypesController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'place-name' => 'required|string|max:16777215'
+        ]);
+
+        $placeName = $request->input('place-name');
+
+        // If the place has previously been added to the DB table, don't add it again.
+        if (PlaceName::where('name', '=', $placeName)->count() > 0) {
+            return redirect()->back()->with('fail', 'This place has already been added.');
+        }
+
+        $placeNameToAdd = new PlaceName();
+        $placeNameToAdd->name = $placeName;
+
+        if ($placeNameToAdd->save()) {
+            return redirect()->back()->with('success', 'Place added.');
+        } else {
+            return redirect()->back()->with('fail', 'An error occurred when adding your place.');
+        }
     }
 
     /**

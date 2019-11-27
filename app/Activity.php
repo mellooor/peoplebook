@@ -40,6 +40,14 @@ class Activity extends Model
         return ($this->new_friendship_id) ? $this->newFriendship : null;
     }
 
+    public function isRelationshipRequest() {
+        return ($this->relationship_request_id) ? $this->relationshipRequest : null;
+    }
+
+    public function isNewRelationship() {
+        return ($this->new_relationship_id) ? $this->relationshipRequestAccepted() : null;
+    }
+
     public function createdStatus() {
         return $this->belongsTo('App\Status', 'created_status_id');
     }
@@ -66,6 +74,14 @@ class Activity extends Model
 
     public function newFriendship() {
         return $this->belongsTo('App\Friendship', 'new_friendship_id');
+    }
+
+    public function relationshipRequest() {
+        return $this->belongsTo('App\RelationshipRequest', 'relationship_request_id');
+    }
+
+    public function relationshipRequestAccepted() {
+        return $this->belongsTo('App\Relationship', 'new_relationship_id');
     }
 
     public static function removePreviousProfilePictureChangedActivities(Collection $previousProfilePicChangedActivities = null) {

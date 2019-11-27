@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\SchoolName;
 use Illuminate\Http\Request;
 
 class SchoolNamesController extends Controller
@@ -34,7 +35,25 @@ class SchoolNamesController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+           'school-name' => 'required|string|max:16777215'
+        ]);
+
+        $schoolName = $request->input('school-name');
+
+        // If the school name has already been added to the DB table, don't add it again.
+        if (SchoolName::where('name', '=', $schoolName)->count() > 0) {
+            return redirect()->back()->with('fail', 'This school has already been added.');
+        }
+
+        $schoolNameToAdd = new SchoolName();
+        $schoolNameToAdd->name = $schoolName;
+
+        if ($schoolNameToAdd->save()) {
+            return redirect()->back()->with('success', 'School added.');
+        } else {
+            return redirect()->back()->with('fail', 'An error occurred when adding your school.');
+        }
     }
 
     /**

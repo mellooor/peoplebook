@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Company;
 
 class CompaniesController extends Controller
 {
@@ -34,7 +35,25 @@ class CompaniesController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+           'employer-name' => 'required|string|max:16777215'
+        ]);
+
+        $employerName = $request->input('employer-name');
+
+        // If the company has already been added, don't add them again.
+        if (Company::where('name', '=', $employerName)->count() > 0) {
+            return redirect()->back()->with('fail', 'This company has already been added.');
+        }
+
+        $employerToAdd = new Company();
+        $employerToAdd->name = $employerName;
+
+        if ($employerToAdd->save()) {
+            return redirect()->back()->with('success', 'Employer added.');
+        } else {
+            return redirect()->back()->with('fail', 'An error occurred when adding your employer.');
+        }
     }
 
     /**

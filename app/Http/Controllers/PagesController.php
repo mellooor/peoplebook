@@ -3,9 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Activity;
+use App\Place;
+use App\PlaceName;
+use App\School;
+use App\SchoolName;
 use App\User;
 use App\Status;
 use Illuminate\Support\Facades\Auth;
+use App\Company;
+use App\RelationshipType;
 
 class pagesController extends Controller
 {
@@ -14,6 +20,10 @@ class pagesController extends Controller
     }
 
     public function user($id = null) {
+        if (intval($id) === Auth::user()->id) {
+            return redirect('my-profile');
+        }
+
         if ($user = User::getFromRouteParameter($id)) {
             $data = ['user' => $user];
 
@@ -86,8 +96,12 @@ class pagesController extends Controller
         return view('search')->with('results', $matchesArray);
     }
 
-    public function userMoreInfo($id) {
-        return view('more-info')->with('userID', $id);
+    public function userMoreInfo($id = null) {
+       if ($user = User::getFromRouteParameter($id)) {
+            return view('more-info')->with('user', $user);
+       } else {
+           return redirect()->route('home');
+       }
     }
 
     public function status($id) {
@@ -106,7 +120,7 @@ class pagesController extends Controller
                 /*
                  * Get all activities where at least one of the users is a friend of the current user, neither of
                  * the users are the current user and where the activity is one for a status being created, a photo
-                 * being uploaded, a profile picture being changed or a new friendship.
+                 * being uploaded, a profile picture being changed, a new friendship or a new relationship.
                  */
                 $q->whereIn('user1_id', $currentUserFriendIDs)
                     ->orWhereIn('user2_id', $currentUserFriendIDs);
@@ -118,7 +132,8 @@ class pagesController extends Controller
                 $q->where('created_status_id', '!=', null)
                     ->orWhere('uploaded_photo_id', '!=', null)
                     ->orWhere('updated_profile_picture_photo_id', '!=', null)
-                    ->orWhere('new_friendship_id', '!=', null);
+                    ->orWhere('new_friendship_id', '!=', null)
+                    ->orWhere('new_relationship_id', '!=', null);
             })->orderBy('created_at', 'DESC')->paginate(10);
 
             $data['user'] = $currentUser;
@@ -128,5 +143,81 @@ class pagesController extends Controller
         } else {
             return view('welcome');
         }
+    }
+
+    public function editName() {
+        $currentUser = User::find(Auth::user()->id);
+
+        return view('more-info-name-edit')->with('user', $currentUser);
+    }
+
+    public function editDOB() {
+        $currentUser = User::find(Auth::user()->id);
+
+        return view('more-info-dob-edit')->with('user', $currentUser);
+    }
+
+    public function editHomeTown() {
+        $currentUser = User::find(Auth::user()->id);
+        $places = PlaceName::all();
+
+        $data = [
+            'user' => $currentUser,
+            'places' => $places,
+            'type' => 'home'
+        ];
+
+        return view('more-info-town-edit')->with('data', $data);
+    }
+
+    public function editCurrentTown() {
+        $currentUser = User::find(Auth::user()->id);
+        $places = PlaceName::all();
+
+        $data = [
+            'user' => $currentUser,
+            'places' => $places,
+            'type' => 'current'
+        ];
+
+        return view('more-info-town-edit')->with('data', $data);
+    }
+
+    public function editSchool() {
+        $currentUser = User::find(Auth::user()->id);
+        $schoolNames = SchoolName::all();
+
+        $data = [
+          'user' => $currentUser,
+          'schoolNames' => $schoolNames
+        ];
+
+        return view('more-info-school-edit')->with('data', $data);
+    }
+
+    public function editJob() {
+        $currentUser = User::find(Auth::user()->id);
+        $employers = Company::all();
+
+        $data = [
+            'user' => $currentUser,
+            'employers' => $employers
+        ];
+
+        return view('more-info-job-edit')->with('data', $data);
+    }
+
+    public function editRelationship() {
+        $currentUser = User::find(Auth::user()->id);
+        $relationshipTypes = RelationshipType::all();
+        $otherUsers = User::where('id', '!=', $currentUser->id)->get();
+
+        $data = [
+          'user' => $currentUser,
+          'relationshipTypes' => $relationshipTypes,
+          'otherUsers' => $otherUsers
+        ];
+
+        return view('more-info-relationship-edit')->with('data', $data);
     }
 }

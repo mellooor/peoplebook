@@ -3,18 +3,32 @@
 @section('content')
     <div class="row">
         <div class="col-md-12">
+            @if (session()->has('success'))
+                <div class="alert alert-success">
+                    {{ session()->get('success') }}
+                </div>
+            @elseif (session()->has('fail'))
+                <div class="alert alert-danger">
+                    {{ session()->get('fail') }}
+                </div>
+            @endif
+
             <div id="notifs-container">
 
                 @if (count($notifications) > 0)
                     @foreach ($notifications as $notification)
-                        @if ($notification->type_id === 1) <!-- status-commented -->
+                        @if ($notification->notificationType->type === 'status-commented') <!-- status-commented -->
                             @include('inc/status-commented-notification-item', ['statusComment' => $notification->activity->statusComment])
-                        @elseif ($notification->type_id === 2) <!-- status-liked -->
+                        @elseif ($notification->notificationType->type === 'status-liked') <!-- status-liked -->
                             @include('inc/status-liked-notification-item', ['statusLike' => $notification->activity->statusLike])
-                        @elseif ($notification->type_id === 3) <!-- friend-request-accepted -->
+                        @elseif ($notification->notificationType->type === 'friend-request-accepted') <!-- friend-request-accepted -->
                             @include('inc/friend-request-accepted-notification-item', ['newFriendship' => $notification->activity->newFriendship])
-                        @elseif ($notification->type_id === 4) <!-- comment-liked -->
+                        @elseif ($notification->notificationType->type === 'comment-liked') <!-- comment-liked -->
                             @include('inc/comment-liked-notification-item', ['commentLike' => $notification->activity->statusCommentLike])
+                        @elseif ($notification->notificationType->type === 'relationship-request')
+                            @include('inc/relationship-request-notification-item', ['relationshipRequest' => $notification->activity->relationshipRequest])
+                        @elseif ($notification->notificationType->type === 'relationship-request-accepted')
+                                @include('inc/relationship-request-accepted-notification-item', ['relationshipRequestAccepted' => $notification->activity->relationshipRequestAccepted])
                         @endif
                     @endforeach
                 @else

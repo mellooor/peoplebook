@@ -3,113 +3,106 @@
 @section('content')
     <div class="row">
         <div class="col-md-9">
-            <img src="/images/default_profile_picture-320x320.png"/>
-            <h2>User 1</h2>
+            @if ($user->activeProfilePicture())
+                <img src="{{ $user->activeProfilePicture()->getFullURL() }}"/>
+            @else
+                <img src="/images/default_profile_picture-320x320.png"/>
+            @endif
 
-            <a class="btn btn-primary" href="{{ route('user') }}">Back</a>
+            <h2>{{$user->first_name}} {{$user->last_name}}</h2>
+
+            <a class="btn btn-dark" href="{{ URL::previous() }}">Back</a>
+            <hr>
 
             <br>
-            <!-- if user is current user -->
-            <form>
-                <div class="form-group">
-                    <label for="name">Name:</label>
-                    <input type="text" class="form-control" name="name"/>
-                </div>
-
-                <div class="form-group">
-                    <label for="date-of-birth">Date of Birth:</label>
-                    <input type="date" class="form-control" name="date-of-birth" disabled/>
-                </div>
-
-                <div class="form-group">
-                    <label for="home-town">Home Town:</label>
-                    <input type="text" class="form-control" name="home-town"/>
-                </div>
-
-                <div class="form-group">
-                    <label for="current-town">Current Town:</label>
-                    <input type="text" class="form-control" name="current-town"/>
-                </div>
-
-                <div class="form-group">
-                    <label for="school">School:</label>
-                    <input type="text" class="form-control" name="school"/>
-                </div>
-
-                <div class="form-group">
-                    <label for="job">Job:</label>
-                    <input type="text" class="form-control" name="job"/>
-                </div>
-
-                <div class="form-group">
-                    <label for="relationship-type">Relationship Status:</label>
-                    <select class="form-control" name="relationship-type">
-                        <option>Single</option>
-                        <option>It's Complicated</option>
-                        <option>In a Relationship</option>
-                    </select>
-
-                    <select class="form-control" name="relationship-person">
-                        <option>1</option>
-                        <option>2</option>
-                        <option>3</option>
-                    </select>
-                </div>
-
-                <button type="submit" name="submit" class="btn btn-primary">Save</button>
-            </form>
-
-            <!-- Else -->
             <ul class="list-group list-group-flush more-info-wrapper">
                 <li class="list-group-item">
                     <b>Name:</b>
-                    User 1
+                    {{ $user->first_name }} {{ $user->last_name }}
                     <!-- If userID matches current user -->
-                    <button class="btn btn-warning"><i class="fas fa-pencil-alt"></i></button>
+                    @if ($user->id === Auth::user()->id)
+                    <a href="{{ route('edit-name-page') }}" class="btn btn-warning"><i class="fas fa-pencil-alt"></i></a>
+                    @endif
                     <!-- end if -->
                 </li>
-                <li class="list-group-item"><b>Date of Birth:</b> 12/12/2001</li>
+                <li class="list-group-item">
+                    <b>Date of Birth:</b>
+                    {{ $user->formattedDateOfBirth() }}
+                    <!-- If userID matches current user -->
+                    @if ($user->id === Auth::user()->id)
+                        <a href="{{ route('edit-dob-page') }}" class="btn btn-warning"><i class="fas fa-pencil-alt"></i></a>
+                    @endif
+                    <!-- end if -->
+                </li>
                 <li class="list-group-item">
                     <b>Home Town:</b>
-                    Tumbridge Wells
+                    @if ($user->homeTown)
+                        {{ $user->homeTown->placeName->name }}
+                    @else
+                        Not Set
+                    @endif
+
                     <!-- If userID matches current user -->
-                    <button class="btn btn-warning"><i class="fas fa-pencil-alt"></i></button>
-                    <!-- end if -->
+                    @if ($user->id === Auth::user()->id)
+                        <a href="{{ route('edit-home-town-page') }}" class="btn btn-warning"><i class="fas fa-pencil-alt"></i></a>
+                    @endif
+                <!-- end if -->
                 </li>
                 <li class="list-group-item">
                     <b>Current Town:</b>
-                    Honolulu
+                    @if ($user->currentTown)
+                        {{ $user->currentTown->placeName->name }}
+                    @else
+                        Not Set
+                    @endif
                     <!-- If userID matches current user -->
-                    <button class="btn btn-warning"><i class="fas fa-pencil-alt"></i></button>
+                    @if ($user->id === Auth::user()->id)
+                        <a href="{{ route('edit-current-town-page') }}" class="btn btn-warning"><i class="fas fa-pencil-alt"></i></a>
+                    @endif
                     <!-- end if -->
                 </li>
                 <li class="list-group-item">
                     <b>School:</b>
-                    Jiju College
+                    @if ($user->currentSchool)
+                        {{ $user->currentSchool->schoolName->name }}
+                    @else
+                        Not Set
+                    @endif
                     <!-- If userID matches current user -->
-                    <button class="btn btn-warning"><i class="fas fa-pencil-alt"></i></button>
+                    @if ($user->id === Auth::user()->id)
+                        <a href="{{ route('edit-school-page') }}" class="btn btn-warning"><i class="fas fa-pencil-alt"></i></a>
+                    @endif
                     <!-- end if -->
                 </li>
-                <ul class="list-group-item"><b>Previous Schools:</b>
-                    <li>Pereq High School</li>
-                </ul>
+
                 <li class="list-group-item">
                     <b>Job:</b>
-                    Painter at Paintingtons
+                    @if ($user->currentJob)
+                        {{ $user->currentJob->job_title }} at {{ $user->currentJob->employer->name }}
+                    @else
+                        Not Set
+                    @endif
                     <!-- If userID matches current user -->
-                    <button class="btn btn-warning"><i class="fas fa-pencil-alt"></i></button>
+                    @if ($user->id === Auth::user()->id)
+                        <a href="{{ route('edit-job-page') }}" class="btn btn-warning"><i class="fas fa-pencil-alt"></i></a>
+                    @endif
                     <!-- end if -->
                 </li>
-                <ul class="list-group-item"><b>Previous Jobs:</b>
-                    <li>Bin Man at Topbin Mans</li>
-                    <li>Teacher at Teachingtons</li>
-                </ul>
                 <li class="list-group-item">
                     <b>Relationship Status:</b>
-                    In a Relationship with User 4
+                    @if ($user->relationship())
+                        @if ($user->relationship()->relationship_type_id === 1)
+                            {{ $user->relationship()->relationshipType->type }}
+                        @else
+                            {{ $user->relationship()->relationshipType->type }} with {{ $user->relationship()->otherUser($user->id)->first_name }} {{ $user->relationship()->otherUser($user->id)->last_name }}
+                        @endif
+                    @else
+                        Not Set
+                    @endif
                     <!-- If userID matches current user -->
-                    <button class="btn btn-warning"><i class="fas fa-pencil-alt"></i></button>
-                    <!-- end if -->
+                    @if ($user->id === Auth::user()->id)
+                        <a href="{{ route('edit-relationship-page') }}" class="btn btn-warning"><i class="fas fa-pencil-alt"></i></a>
+                    @endif
                 </li>
             </ul>
         </div>

@@ -36,6 +36,8 @@
                         @include('inc/photo-news-feed-item')
                     @elseif ($newFriendship = $newsFeedItem->isNewFriendship())
                         @include('inc/new-friendship-news-feed-item')
+                    @elseif ($newRelationship = $newsFeedItem->isNewRelationship)
+                        @include('inc/new-relationship-news-feed-item')
                     @endif
                     <br>
                 @endforeach

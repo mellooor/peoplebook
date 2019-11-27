@@ -12,6 +12,10 @@ class Notification extends Model
         return $this->belongsTo('App\Activity', 'activity_id');
     }
 
+    public function notificationType() {
+        return $this->belongsTo('App\NotificationType', 'type_id');
+    }
+
     /*
      * Updates the is_active value for a notification to false.
      */

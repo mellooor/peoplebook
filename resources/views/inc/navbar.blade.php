@@ -41,7 +41,7 @@
                         {{ Auth::user()->first_name }} {{ Auth::user()->last_name }}
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" href="{{ route('user') }}">View My Profile</a>
+                        <a class="dropdown-item" href="{{ route('my-profile') }}">View My Profile</a>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="{{ route('my-friends') }}">Friends</a>
                         <div class="dropdown-divider"></div>
