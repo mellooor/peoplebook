@@ -28,7 +28,8 @@ class AddNewRelationshipIdColumnToActivitiesTable extends Migration
     public function down()
     {
         Schema::table('activities', function (Blueprint $table) {
-            //
+            $table->dropForeign('activities_new_relationship_id_foreign');
+            $table->dropColumn('new_relationship_id');
         });
     }
 }

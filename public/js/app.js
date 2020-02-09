@@ -6,9 +6,8 @@ Populates the photo lightbox modal with the image selected by the user via a mou
  */
 
 (function() {
-    var photoElements = document.querySelectorAll('.gallery-image');
-    var photoElementsArray = Array.prototype.slice.call(photoElements);
-    photoElementsArray.forEach(function(photoElement) {
+    var photoElement = document.getElementById('single-photo-page-img');
+    if (photoElement) {
         photoElement.addEventListener('click', function(e) {
             var photoSrc, lightboxImageElement;
 
@@ -19,7 +18,7 @@ Populates the photo lightbox modal with the image selected by the user via a mou
             lightboxImageElement = document.getElementById('photo-lightbox-image');
             lightboxImageElement.src = photoSrc;
         });
-    });
+    }
 })();
 
 /*
@@ -125,13 +124,18 @@ Populate the remove friend modal box when it is toggled.
 
 
 /*
-Populate the status delete modal box hidden input when it is toggled.
+Populate the status of photo delete modal box hidden input when it is toggled.
  */
 (function() {
-    var statusDeleteBtns, statusDeleteBtnsArray, statusDeleteForm, targetStatusDeleteInput;
+    var statusDeleteBtns, statusDeleteBtnsArray, statusDeleteForm, targetStatusDeleteInput, photoDeleteBtns, photoDeleteBtnsArray, photoDeleteForm, targetPhotoDeleteInput;
+
     statusDeleteBtns = document.querySelectorAll('.status .btn-danger');
     statusDeleteBtnsArray = Array.prototype.slice.call(statusDeleteBtns);
     statusDeleteForm = document.getElementById('delete-status-form');
+
+    photoDeleteBtns = document.querySelectorAll('.photo .btn-danger');
+    photoDeleteBtnsArray = Array.prototype.slice.call(photoDeleteBtns);
+    photoDeleteForm = document.getElementById('delete-photo-form');
 
     if (statusDeleteForm) {
         targetStatusDeleteInput = statusDeleteForm.querySelector('input[name="status-id"]');
@@ -141,6 +145,18 @@ Populate the status delete modal box hidden input when it is toggled.
                 var statusID = statusDeleteBtn.dataset.statusId;
 
                 targetStatusDeleteInput.value = statusID;
+            });
+        });
+    }
+
+    if (photoDeleteForm) {
+        targetPhotoDeleteInput = photoDeleteForm.querySelector('input[name="photo-id"]');
+
+        photoDeleteBtnsArray.forEach(function(photoDeleteBtn) {
+            photoDeleteBtn.addEventListener('click', function() {
+                var photoID = photoDeleteBtn.dataset.photoId;
+
+                targetPhotoDeleteInput.value = photoID;
             });
         });
     }
@@ -178,79 +194,130 @@ Populate the status edit modal box when it is toggled.
 })();
 
 /*
-Submit the status comment form when the enter key is pressed.
+Submit a comment form when the enter key is pressed.
  */
 (function() {
-    var statusCommentTextInputs, statusCommentTextInputsArray;
+    var commentTextInputs, commentTextInputsArray;
 
-    statusCommentTextInputs = document.querySelectorAll('.status-comment-text-input');
-    statusCommentTextInputsArray = Array.prototype.slice.call(statusCommentTextInputs);
+    commentTextInputs = document.querySelectorAll('.comment-text-input');
+    commentTextInputsArray = Array.prototype.slice.call(commentTextInputs);
 
-    statusCommentTextInputsArray.forEach(function(statusCommentTextInput) {
-        statusCommentTextInput.addEventListener('keypress', function(e) {
+    commentTextInputsArray.forEach(function(commentTextInput) {
+        commentTextInput.addEventListener('keypress', function(e) {
             if (e.key === "Enter") {
                 e.preventDefault();
-                statusCommentTextInput.closest('form').submit();
+                commentTextInput.closest('form').submit();
             }
         });
     });
 })();
 
 /*
-Populate the status comment edit modal box when it is triggered.
+Populate the status and photo comment edit modal boxes when they are triggered.
  */
 (function() {
-    var commentEditBtns, commentEditBtnsArray, commentEditForm, commentEditFormBody, targetStatusIDInput, targetCommentIDInput;
+    var statusCommentEditBtns, statusCommentEditBtnsArray, statusCommentEditForm, statusCommentEditFormBody, photoCommentEditBtns, photoCommentEditBtnsArray, photoCommentEditForm, photoCommentEditFormBody, targetStatusIDInput, targetPhotoIDInput, targetCommentIDInput;
 
-    commentEditBtns = document.querySelectorAll('.status-comment-edit-btn');
-    commentEditBtnsArray = Array.prototype.slice.call(commentEditBtns);
-    commentEditForm = document.getElementById('status-comment-edit-form');
-    commentEditFormBody = document.getElementById('status-comment-edit-body');
+    statusCommentEditBtns = document.querySelectorAll('.status-comment-edit-btn');
+    statusCommentEditBtnsArray = Array.prototype.slice.call(statusCommentEditBtns);
+    statusCommentEditForm = document.getElementById('status-comment-edit-form');
+    statusCommentEditFormBody = document.getElementById('status-comment-edit-body');
 
-    if (commentEditForm) {
-        targetStatusIDInput = commentEditForm.querySelector('input[name="status-id"]');
-        targetCommentIDInput = commentEditForm.querySelector('input[name="comment-id"]');
+    photoCommentEditBtns = document.querySelectorAll('.photo-comment-edit-btn');
+    photoCommentEditBtnsArray = Array.prototype.slice.call(photoCommentEditBtns);
+    photoCommentEditForm = document.getElementById('photo-comment-edit-form');
+    photoCommentEditFormBody = document.getElementById('photo-comment-edit-body');
 
-        commentEditBtnsArray.forEach(function(commentEditBtn) {
+
+    if (statusCommentEditForm) {
+        targetStatusIDInput = statusCommentEditForm.querySelector('input[name="status-id"]');
+        targetCommentIDInput = statusCommentEditForm.querySelector('input[name="comment-id"]');
+
+        statusCommentEditBtnsArray.forEach(function(statusCommentEditBtn) {
             var mainCommentElement, commentTextElement, statusID, commentID, existingComment;
 
-            mainCommentElement = commentEditBtn.closest('.comment');
+            mainCommentElement = statusCommentEditBtn.closest('.comment');
             commentTextElement = mainCommentElement.querySelector('.card-text');
 
-            statusID = commentEditBtn.dataset.statusId;
-            commentID = commentEditBtn.dataset.commentId;
+            statusID = statusCommentEditBtn.dataset.statusId;
+            commentID = statusCommentEditBtn.dataset.commentId;
             existingComment = commentTextElement.innerText;
 
-            commentEditBtn.addEventListener('click', function() {
+            statusCommentEditBtn.addEventListener('click', function() {
                 targetStatusIDInput.value = statusID;
                 targetCommentIDInput.value = commentID;
-                commentEditFormBody.value = existingComment;
+                statusCommentEditFormBody.value = existingComment;
+            });
+        });
+    }
+
+    if (photoCommentEditForm) {
+        targetPhotoIDInput = photoCommentEditForm.querySelector('input[name="photo-id"]');
+        targetCommentIDInput = photoCommentEditForm.querySelector('input[name="comment-id"]');
+
+        photoCommentEditBtnsArray.forEach(function(photoCommentEditBtn) {
+            var mainCommentElement, commentTextElement, photoID, commentID, existingComment;
+
+            mainCommentElement = photoCommentEditBtn.closest('.comment');
+            commentTextElement = mainCommentElement.querySelector('.card-text');
+
+            photoID = photoCommentEditBtn.dataset.photoId;
+            commentID = photoCommentEditBtn.dataset.commentId;
+            existingComment = commentTextElement.innerText;
+
+            photoCommentEditBtn.addEventListener('click', function() {
+                targetPhotoIDInput.value = photoID;
+                targetCommentIDInput.value = commentID;
+                photoCommentEditFormBody.value = existingComment;
             });
         });
     }
 })();
 
 /*
-Populate the status comment delte modal box when it is triggered.
+Populate the status and photo comment delete modal boxes when they are triggered.
  */
 (function() {
-    var commentDeleteBtns, commentDeleteBtnsArray, commentDeleteForm, targetStatusIDInput, targetCommentIDInput;
-    commentDeleteBtns = document.querySelectorAll('.status-comment-delete-btn');
-    commentDeleteBtnsArray = Array.prototype.slice.call(commentDeleteBtns);
-    commentDeleteForm = document.getElementById('delete-status-comment-form');
+    var statusCommentDeleteBtns, statusCommentDeleteBtnsArray, statusCommentDeleteForm, photoCommentDeleteBtns, photoCommentDeleteBtnsArray, photoCommentDeleteForm, targetStatusIDInput, targetPhotoIDInput, targetCommentIDInput;
 
-    if (commentDeleteForm) {
-        targetStatusIDInput = commentDeleteForm.querySelector('input[name="status-id"]');
-        targetCommentIDInput = commentDeleteForm.querySelector('input[name="comment-id"]');
+    statusCommentDeleteBtns = document.querySelectorAll('.status-comment-delete-btn');
+    statusCommentDeleteBtnsArray = Array.prototype.slice.call(statusCommentDeleteBtns);
+    statusCommentDeleteForm = document.getElementById('delete-status-comment-form');
 
-        commentDeleteBtnsArray.forEach(function(commentDeleteBtn) {
-            commentDeleteBtn.addEventListener('click', function() {
+    photoCommentDeleteBtns = document.querySelectorAll('.photo-comment-delete-btn');
+    photoCommentDeleteBtnsArray = Array.prototype.slice.call(photoCommentDeleteBtns);
+    photoCommentDeleteForm = document.getElementById('delete-photo-comment-form');
+
+
+    if (statusCommentDeleteForm) {
+        targetStatusIDInput = statusCommentDeleteForm.querySelector('input[name="status-id"]');
+        targetCommentIDInput = statusCommentDeleteForm.querySelector('input[name="comment-id"]');
+
+        statusCommentDeleteBtnsArray.forEach(function(statusCommentDeleteBtn) {
+            statusCommentDeleteBtn.addEventListener('click', function() {
                 var statusID, commentID;
 
-                statusID = commentDeleteBtn.dataset.statusId;
-                commentID = commentDeleteBtn.dataset.commentId;
+                statusID = statusCommentDeleteBtn.dataset.statusId;
+                commentID = statusCommentDeleteBtn.dataset.commentId;
 
                 targetStatusIDInput.value = statusID;
+                targetCommentIDInput.value = commentID;
+            });
+        });
+    }
+
+    if (photoCommentDeleteForm) {
+        targetPhotoIDInput = photoCommentDeleteForm.querySelector('input[name="photo-id"]');
+        targetCommentIDInput = photoCommentDeleteForm.querySelector('input[name="comment-id"]');
+
+        photoCommentDeleteBtnsArray.forEach(function(photoCommentDeleteBtn) {
+            photoCommentDeleteBtn.addEventListener('click', function() {
+                var photoID, commentID;
+
+                photoID = photoCommentDeleteBtn.dataset.photoId;
+                commentID = photoCommentDeleteBtn.dataset.commentId;
+
+                targetPhotoIDInput.value = photoID;
                 targetCommentIDInput.value = commentID;
             });
         });

@@ -19,27 +19,97 @@ class pagesController extends Controller
         return view('notifications');
     }
 
-    public function user($id = null) {
-        if (intval($id) === Auth::user()->id) {
+    public function user($targetUserID = null) {
+        $currentUser = User::find(Auth::user()->id);
+        $isCurrentUser = false;
+
+        if (intval($targetUserID) === $currentUser->id) {
             return redirect('my-profile');
         }
 
-        if ($user = User::getFromRouteParameter($id)) {
-            $data = ['user' => $user];
+        if ($targetUserID === null) { $isCurrentUser = true; }
 
-            $data['newsFeedItems'] = Activity::where(function($q) use ($user) {
+        // If the supplied user ID parameter corresponds to an actual user...
+        if ($targetUser = User::getFromRouteParameter($targetUserID)) {
+            $data = ['user' => $targetUser];
+            $publicNewsFeedItems = collect();
+            $friendOfFriendNewsFeedItems = collect();
+            $friendOnlyNewsFeedItems = collect();
+            // If the target user isn't the current user, determine whether they are a friend of the current user.
+            $isFriend = (!$isCurrentUser) ? $currentUser->isAFriend($targetUserID) : null;
+            // If the target user isn't the current user, determine whether they are a friend of a friend of the current user.
+            $isFriendOfFriend = (!$isCurrentUser) ? $currentUser->isAFriendOfAFriend($targetUserID) : null;
+
+            $allNewsFeedItems = Activity::where(function($q) use ($targetUser) {
                 /*
                  * Get all activities for a user where the activity is one for a status being created, a photo
                  * being uploaded, a profile picture being changed or a new friendship.
                  */
-                $q->where('user1_id', '=', $user->id)
-                    ->orWhere('user2_id', '=', $user->id);
+                $q->where('user1_id', '=', $targetUser->id)
+                    ->orWhere('user2_id', '=', $targetUser->id);
             })->where(function($q) {
                     $q->where('created_status_id', '!=', null)
                         ->orWhere('uploaded_photo_id', '!=', null)
                         ->orWhere('updated_profile_picture_photo_id', '!=', null)
-                        ->orWhere('new_friendship_id', '!=', null);
-                })->orderBy('created_at', 'DESC')->paginate(5);
+                        ->orWhere('new_friendship_id', '!=', null)
+                        ->orWhere('new_relationship_id', '!=', null);
+                })->orderBy('created_at', 'DESC')->get();
+
+            /*
+             * Filter the activities based on the privacy settings of them and the relationship of the current user
+             * to the user that the user id parameter corresponds to then paginate.
+             *
+             * The foreach loops are wrapped within isFriendOfFriend and isFriend conditionals to prevent unnecessary
+             * privacy conditionals running on every news feed item in the loop.
+             */
+            if ($isFriendOfFriend) {
+                /*
+                 * If the target user is a friend of a friend of the current user, filter out all news feed items
+                 * apart from those that are set to be seen publicly or by friends of friends.
+                 */
+                foreach ($allNewsFeedItems as $newsFeedItem) {
+                    if ($newsFeedItem->getPrivacy($targetUser) === 'public') {
+                        $publicNewsFeedItems->push($newsFeedItem);
+                    } elseif ($newsFeedItem->getPrivacy($targetUser) === 'friends-of-friends') {
+                        $friendOnlyNewsFeedItems->push($newsFeedItem);
+                    }
+                }
+            } elseif ($isFriend || $isCurrentUser) {
+                /*
+                 * If the target user is a friend of the current user or is the current user themselves, filter out
+                 * all news feed items apart from those that are set to be seen publicly, by friends of friends and
+                 * by friends.
+                 */
+                foreach ($allNewsFeedItems as $newsFeedItem) {
+                    if ($newsFeedItem->getPrivacy($targetUser) === 'public') {
+                        $publicNewsFeedItems->push($newsFeedItem);
+                    } elseif ($newsFeedItem->getPrivacy($targetUser) === 'friends-of-friends') {
+                        $friendOnlyNewsFeedItems->push($newsFeedItem);
+                    } elseif ($newsFeedItem->getPrivacy($targetUser) === 'friends-only') {
+                        $friendOfFriendNewsFeedItems->push($newsFeedItem);
+                    }
+                }
+            } else {
+                foreach ($allNewsFeedItems as $newsFeedItem) {
+                    if ($newsFeedItem->getPrivacy($targetUser) === 'public') {
+                        $publicNewsFeedItems->push($newsFeedItem);
+                    }
+                }
+            }
+
+            // Merge all of the filtered news feed items back together.
+            $data['newsFeedItems'] = $publicNewsFeedItems;
+            $data['newsFeedItems'] = $data['newsFeedItems']->merge($friendOfFriendNewsFeedItems);
+            $data['newsFeedItems'] = $data['newsFeedItems']->merge($friendOnlyNewsFeedItems);
+
+            // Re-sort the news feed items into descending chronological order.
+            $data['newsFeedItems'] = $data['newsFeedItems']->sortByDesc('created_at');
+
+            // Paginate the collection.
+            $data['newsFeedItems'] = $data['newsFeedItems']->paginate(10);
+
+
+
 
             return view('user')->with('data', $data);
         } else {
@@ -52,7 +122,8 @@ class pagesController extends Controller
     }
 
     public function settings() {
-        return view('settings');
+        $currentUser = User::find(Auth::user()->id);
+        return view('settings')->with('user', $currentUser);
     }
 
     public function friends($id = null) {
@@ -98,7 +169,69 @@ class pagesController extends Controller
 
     public function userMoreInfo($id = null) {
        if ($user = User::getFromRouteParameter($id)) {
-            return view('more-info')->with('user', $user);
+           $data = [];
+           $currentUser = User::find(Auth::user()->id);
+           $isLoggedinUser = ($user->id === $currentUser->id);
+           $isFriend = (!$isLoggedinUser) ? $user->isAFriend($currentUser->id) : false;
+           $isFriendOfFriend = (!$isLoggedinUser) ? $user->isAFriendOfAFriend($currentUser->id) : false;
+
+           if ($isLoggedinUser || $isFriend) {
+               $data['displayDOB'] = true;
+               $data['displayHomeTown'] = true;
+               $data['displayCurrentTown'] = true;
+               $data['displaySchool'] = true;
+               $data['displayJob'] = true;
+               $data['displayRelationship'] = true;
+           } else if (!$isLoggedinUser) {
+               $dateOfBirthPrivacy = $user->dateOfBirthPrivacy->visibility;
+               $homeTownPrivacy = $user->homeTownPrivacy->visibility;
+               $currentTownPrivacy = $user->currentTownPrivacy->visibility;
+               $schoolPrivacy = $user->schoolPrivacy->visibility;
+               $jobPrivacy = $user->jobPrivacy->visibility;
+               $relationshipPrivacy = $user->relationshipPrivacy->visibility;
+
+               if ($isFriendOfFriend) {
+                    // Is the date of birth to be displayed?
+                    $data['displayDOB'] = ($dateOfBirthPrivacy === 'public' || $dateOfBirthPrivacy === 'friends-of-friends');
+
+                    // Is the home town to be displayed?
+                    $data['displayHomeTown'] = ($homeTownPrivacy === 'public' || $homeTownPrivacy === 'friends-of-friends');
+
+                    // Is the current town to be displayed?
+                    $data['displayCurrentTown'] = ($currentTownPrivacy === 'public' || $currentTownPrivacy === 'friends-of-friends');
+
+                    // Is the school to be displayed?
+                    $data['displaySchool'] = ($schoolPrivacy === 'public' || $schoolPrivacy === 'friends-of-friends');
+
+                    // Is the job to be displayed?
+                    $data['displayJob'] = ($jobPrivacy === 'public' || $jobPrivacy === 'friends-of-friends');
+
+                    // Is the relationship to be displayed?
+                    $data['displayRelationship'] = ($relationshipPrivacy === 'public' || $relationshipPrivacy === 'friends-of-friends');
+               } else {
+                    // Is the date of birth to be displayed?
+                    $data['displayDOB'] = ($dateOfBirthPrivacy === 'public');
+
+                    // Is the home town to be displayed?
+                    $data['displayHomeTown'] = ($homeTownPrivacy === 'public');
+
+                    // Is the current town to be displayed?
+                    $data['displayCurrentTown'] = ($currentTownPrivacy === 'public');
+
+                    // Is the school to be displayed?
+                    $data['displaySchool'] = ($schoolPrivacy === 'public');
+
+                    // Is the job to be displayed?
+                    $data['displayJob'] = ($jobPrivacy === 'public');
+
+                    // Is the relationship to be displayed?
+                    $data['displayRelationship'] = ($relationshipPrivacy === 'public');
+               }
+           }
+
+           $data['user'] = $user;
+
+            return view('more-info')->with('data', $data);
        } else {
            return redirect()->route('home');
        }

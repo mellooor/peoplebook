@@ -125,13 +125,12 @@ footer {
     opacity: 0.75;
 }
 
-#photo-lightbox > .modal-dialog {
-    max-width: unset;
-    width: 75%;
-}
-
 #photo-lightbox img {
     max-width: 100%;
+}
+
+#single-photo-page-img {
+    cursor: pointer;
 }
 
 #photo-pagination > .pagination {

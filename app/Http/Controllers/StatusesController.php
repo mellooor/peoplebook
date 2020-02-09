@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\PrivacyType;
 use Illuminate\Http\Request;
 use App\User;
 use App\Status;
 use App\StatusPhoto;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use App\Traits\ImagePathsTrait;
 use App\Traits\ImageUploadTrait;
 use App\Traits\StoreUploadAndThumbnailTrait;
 use App\Activity;
+use Illuminate\Support\Facades\Auth;
 
 class StatusesController extends Controller
 {
-    use ImagePathsTrait;
     use ImageUploadTrait;
     use StoreUploadAndThumbnailTrait;
 
@@ -28,7 +28,7 @@ class StatusesController extends Controller
      */
     public function index()
     {
-        $currentUserID = \Auth::user()->id;
+        $currentUserID = Auth::user()->id;
         $friendships = User::find($currentUserID)->friendshipUsers1;
         $friendships = $friendships->merge(User::find($currentUserID)->friendshipUsers2);
 
@@ -65,7 +65,7 @@ class StatusesController extends Controller
      */
     public function store(Request $request)
     {
-        $currentUserID = \Auth::user()->id;
+        $currentUserID = Auth::user()->id;
 
         $request->validate([
            'body' => 'required|string|max:16777215'
@@ -170,7 +170,7 @@ class StatusesController extends Controller
      */
     public function update(Request $request)
     {
-        $currentUserID = \Auth::user()->id;
+        $currentUserID = Auth::user()->id;
 
         $request->validate([
             'status-id' => 'required|integer',
@@ -199,6 +199,37 @@ class StatusesController extends Controller
         }
     }
 
+    public function changePrivacy(Request $request) {
+        $currentUser = User::find(Auth::user()->id);
+
+        $request->validate([
+            'status-id' => 'required|integer',
+            'privacy-type' => 'required|string|max:16777215'
+        ]);
+
+        $statusID = intval($request->input('status-id'));
+        $privacyType = $request->input('privacy-type');
+        $validPrivacyTypes = PrivacyType::all()->pluck('visibility')->toArray();
+
+        // If the suppliled status ID corresponds to a valid status in the DB...
+        if ($status = Status::find($statusID)) {
+            // If the supplied privacy type is a valid value and the current user is the author of the status...
+            if (in_array($privacyType, $validPrivacyTypes) && $status->author_id === $currentUser->id) {
+                $status->privacy_type_id = PrivacyType::where('visibility', '=', $privacyType)->first()->id;
+
+                if ($status->push()) {
+                    return redirect()->back()->with('success', 'Status privacy updated.');
+                } else {
+                    return redirect()->back()->with('error', 'An error occurred when updating the privacy of your status.');
+                }
+            } else {
+                return redirect()->back()->with('error', 'An error occurred when updating the privacy of your status.');
+            }
+        } else {
+            return redirect()->back()->with('error', 'An error occurred when updating the privacy of your status.');
+        }
+    }
+
     /**
      * Remove the specified resource from storage.
      *
@@ -209,7 +240,7 @@ class StatusesController extends Controller
      */
     public function destroy(Request $request)
     {
-        $currentUserID = \Auth::user()->id;
+        $currentUserID = Auth::user()->id;
 
         $request->validate([
            'status-id' => 'required|integer'

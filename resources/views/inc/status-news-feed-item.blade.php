@@ -8,26 +8,47 @@
             @endif
             {{ $status->author->first_name }} {{ $status->author->last_name }}
         </a>
-        {{--<div class="dropdown ml-auto">--}}
-            {{--<button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">--}}
-                {{--Privacy--}}
-            {{--</button>--}}
-            {{--<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">--}}
-                {{--<a class="dropdown-item" href="#">Show to All Users <i class="fas fa-check"></i></a>--}}
-                {{--<a class="dropdown-item" href="#">Show to Friends Only</a>--}}
-            {{--</div>--}}
-            {{--@if ($data['user'] === $status->author)--}}
-            {{--<button class="btn btn-warning edit-status-btn" data-toggle="modal" data-target="#status-edit-modal" data-status-id="{{ $status->id }}"><i class="fas fa-pencil-alt"></i></button>--}}
-            {{--<button class="btn btn-danger" data-toggle="modal" data-target="#status-delete-confirm" data-status-id="{{ $status->id }}"><i class="fas fa-trash-alt"></i></button>--}}
-            {{--@endif--}}
-        {{--</div>--}}
+
+        <div class="dropdown ml-auto">
+            @if ($data['user']->id === $status->author_id)
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Privacy
+                </button>
+                <form method="post" action="{{ route('update-status-privacy') }}" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="status-id" value="{{ $status->id }}"/>
+                    <button type="submit" name="privacy-type" value="public" class="dropdown-item">
+                        Show to All Users
+                        @if ($status->privacy->visibility === 'public')
+                            <i class="fas fa-check"></i>
+                        @endif
+                    </button>
+                    <button type="submit" name="privacy-type" value="friends-of-friends" class="dropdown-item">
+                        Show to Friends and Friends of Friends
+                        @if ($status->privacy->visibility === 'friends-of-friends')
+                            <i class="fas fa-check"></i>
+                        @endif
+                    </button>
+                    <button type="submit" name="privacy-type" value="friends-only" class="dropdown-item">
+                        Show to Friends Only
+                        @if ($status->privacy->visibility === 'friends-only')
+                            <i class="fas fa-check"></i>
+                        @endif
+                    </button>
+                </form>
+                <button class="btn btn-warning edit-status-btn" data-toggle="modal" data-target="#status-edit-modal" data-status-id="{{ $status->id }}"><i class="fas fa-pencil-alt"></i></button>
+                <button class="btn btn-danger" data-toggle="modal" data-target="#status-delete-confirm" data-status-id="{{ $status->id }}"><i class="fas fa-trash-alt"></i></button>
+            @endif
+        </div>
+
     </div>
     <div class="card-body">
         <p class="card-text">{{ $status->content }}</p>
 
         @if (count($status->photos) > 0)
         @foreach ($status->photos as $photo)
-            <a href="{{ $photo->information->getAssociatedPhoto('original-upload')->getFullURL() }}">
+            <a href="{{ route('photo', $photo->information->id) }}">
                 <img src="{{ $photo->information->getAssociatedPhoto('thumbnail')->getFullURL() }}"/>
             </a>
         @endforeach
@@ -111,7 +132,7 @@
         <form action="{{ route('add-comment') }}" method="post">
             @csrf
             <input type="hidden" name="status-id" value="{{ $status->id }}"/>
-            <textarea class="w-100 status-comment-text-input" name="comment" placeholder="Enter Comment..."></textarea>
+            <textarea class="w-100 comment-text-input" name="comment" placeholder="Enter Comment..."></textarea>
         </form>
     </div>
 </div>

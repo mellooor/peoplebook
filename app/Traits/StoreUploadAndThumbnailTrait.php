@@ -10,6 +10,7 @@ namespace App\Traits;
 use Intervention\Image\Image as InterventionImage;
 use App\Photo;
 use Illuminate\Support\Facades\Auth;
+use App\User;
 use Illuminate\Support\Facades\DB;
 
 trait StoreUploadAndThumbnailTrait
@@ -23,20 +24,22 @@ trait StoreUploadAndThumbnailTrait
      * @return Array - An array containing the Photo instances for the freshly inserted upload image and thumbnail. Returns an empty array if either image cannot be saved to the DB.
      */
     public function storeUploadAndThumbnail(InterventionImage $uploadedImage, InterventionImage $thumbnailImage) {
-        $currentUserID = Auth::user()->id;
+        $currentUser = User::find(Auth::user()->id);
 
         $uploadPhoto = new Photo();
-        $uploadPhoto->uploader_id = $currentUserID;
+        $uploadPhoto->uploader_id = $currentUser->id;
         $uploadPhoto->file_name = $uploadedImage->basename;
         //$uploadPhoto->caption = '';
         $uploadPhoto->type_id = 1;
         $uploadPhoto->time_uploaded = date('Y-m-d H:i:s');
+        $uploadPhoto->privacy_type_id = $currentUser->default_photo_privacy_type_id;
 
         $thumbnailPhoto = new Photo();
-        $thumbnailPhoto->uploader_id = $currentUserID;
+        $thumbnailPhoto->uploader_id = $currentUser->id;
         $thumbnailPhoto->file_name = $thumbnailImage->basename;
         $thumbnailPhoto->type_id = 3;
         $thumbnailPhoto->time_uploaded = date('Y-m-d H:i:s');
+        $thumbnailPhoto->privacy_type_id = $currentUser->default_photo_privacy_type_id;
 
         if ($uploadPhoto->save() && $thumbnailPhoto->save()) {
             $array = [

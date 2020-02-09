@@ -13,29 +13,29 @@
                 </div>
             @endif
 
-            @if ($user->id === Auth::user()->id)
+            @if ($data['isCurrentUser'])
                 <h2>Your Photos</h2>
             @else
-                <h2>{{ $user->first_name }}'s Photos</h2>
+                <h2>{{ $data['user']->first_name }}'s Photos</h2>
             @endif
 
-            <a class="btn btn-primary" href="{{ route('user', $user->id) }}">Back</a>
+            <a class="btn btn-primary" href="{{ route('user', $data['user']->id) }}">Back</a>
 
-            @if ($user->id === Auth::user()->id)
+            @if ($data['isCurrentUser'])
                 <button id="add-photos-modal-btn" class="btn btn-primary" data-toggle="modal" data-target="#add-photos-modal"><i class="fas fa-upload"></i> Add Photos</button>
             @endif
 
             <br>
-            @if (count($user->paginatedThumbnailPhotos(9)) > 0)
+            @if ($data['photos']->total() > 0)
                 <div id="gallery">
-                    @foreach ($user->paginatedThumbnailPhotos(9) as $photo)
-                        <img class="gallery-image" src="{{ $photo->getFullURL() }}" data-toggle="modal" data-target="#photo-lightbox" data-photo-id="{{ $photo->id }}">
+                    @foreach ($data['photos'] as $photo)
+                        <a href="{{ route('photo', $photo->id) }}"><img class="gallery-image" src="{{ $photo->getFullURL() }}"></a>
                     @endforeach
                 </div>
 
                 <br>
                 <div id="photo-pagination">
-                    {{ $user->paginatedThumbnailPhotos(9)->links() }}
+                    {{ $data['photos']->links() }}
                 </div>
             @else
             <h2>No Images to Show!</h2>

@@ -31,6 +31,10 @@ class Status extends Model
         return $this->hasOne('App\Activity', 'created_status_id', 'id');
     }
 
+    public function privacy() {
+        return $this->belongsTo('App\PrivacyType', 'privacy_type_id');
+    }
+
     /*
      * Verifies that a variable is a Status model.
      *

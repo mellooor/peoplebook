@@ -36,7 +36,7 @@
                         @include('inc/photo-news-feed-item')
                     @elseif ($newFriendship = $newsFeedItem->isNewFriendship())
                         @include('inc/new-friendship-news-feed-item')
-                    @elseif ($newRelationship = $newsFeedItem->isNewRelationship)
+                    @elseif ($newRelationship = $newsFeedItem->isNewRelationship())
                         @include('inc/new-relationship-news-feed-item')
                     @endif
                     <br>
@@ -50,8 +50,11 @@
         @include("inc/status-create-modal")
         @include("inc/status-delete-confirm")
         @include("inc/status-edit-modal")
+        @include("inc/photo-delete-confirm")
         @include("inc/likes-modal")
         @include("inc/status-comment-edit-modal")
         @include("inc/status-comment-delete-confirm")
+        @include("inc/photo-comment-edit-modal")
+        @include("inc/photo-comment-delete-confirm")
     </div>
 @endsection

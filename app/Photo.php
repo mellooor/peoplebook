@@ -39,6 +39,31 @@ class Photo extends Model
         return $this->hasOne('App\Activity', 'uploaded_photo_id', 'id');
     }
 
+    public function privacy() {
+        return $this->belongsTo('App\PrivacyType', 'privacy_type_id');
+    }
+
+    public function comments() {
+        $rawUpload = $this->getAssociatedPhoto('original-upload');
+        return $rawUpload->hasMany('App\PhotoComment', 'raw_photo_id');
+    }
+
+    public function likes() {
+        $rawUpload = $this->getAssociatedPhoto('original-upload');
+        return $rawUpload->hasMany('App\PhotoLike', 'raw_photo_id');
+    }
+
+    public function hasProfilePicture() {
+        $profilePicture = $this->getAssociatedPhoto('profile-picture');
+        $activeProfilePicture = $this->getAssociatedPhoto('active-profile-picutre');
+
+        if ($profilePicture || $activeProfilePicture) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     /*
      * Takes an existing active profile picture and profile picture thumbnail and makes them un-active.
      */

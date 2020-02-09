@@ -5,19 +5,37 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Friendship;
 use App\User;
+use Illuminate\Support\Facades\Auth;
 
 class FriendshipsController extends Controller
 {
     public function index($id = null) {
         if ($user = User::getFromRouteParameter($id)) {
+            $currentUser = User::find(Auth::user()->id);
+
+            $isCurrentUser = ($user->id === $currentUser->id);
+            $isFriend = ($user->isAFriend($currentUser->id));
+            $isFriendOfFriend = ($user->isAFriendOfAFriend($currentUser->id));
+            $friendshipPrivacy = $user->friendsPrivacy->visibility;
+
             $data = ['user' => $user];
             $data['friendships'] = [];
 
-            foreach ($user->getAllFriendships() as $friendship) {
-                if ($friendship->user1_id === $user->id) {
-                    $data['friendships'][$friendship->id] = $friendship->user2;
-                } else if ($friendship->user2_id === $user->id) {
-                    $data['friendships'][$friendship->id] = $friendship->user1;
+            if ($isCurrentUser || $isFriend) {
+                $displayFriends = true;
+            } else if ($isFriendOfFriend) {
+                $displayFriends = ($friendshipPrivacy === 'public' || $friendshipPrivacy === 'friends-of-friends') ? true : false;
+            } else {
+                $displayFriends = ($friendshipPrivacy === 'public') ? true : false;
+            }
+
+            if ($displayFriends) {
+                foreach ($user->getAllFriendships() as $friendship) {
+                    if ($friendship->user1_id === $user->id) {
+                        $data['friendships'][$friendship->id] = $friendship->user2;
+                    } else if ($friendship->user2_id === $user->id) {
+                        $data['friendships'][$friendship->id] = $friendship->user1;
+                    }
                 }
             }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\PrivacyType;
 use Illuminate\Http\Request;
 use App\User;
 use App\Traits\ImageUploadTrait;
@@ -21,15 +22,79 @@ class PhotosController extends Controller
     /**
      * Display all of a user's photos.
      *
-     * @param int $id - The ID of the user whose photos will be retrieved.
+     * @param int $targetUserID - The ID of the user whose photos will be retrieved.
      * @return \Illuminate\Http\Response - The HTTP response that correlates to the photos being retrieved successfully.
      */
-    public function index($id = null)
+    public function index($targetUserID = null)
     {
-        if ($user = User::getFromRouteParameter($id)) {
-            return view('photos')->with('user', $user);
+        $currentUser = User::find(Auth::user()->id);
+        $isCurrentUser = false;
+
+        if ($targetUserID === null) { $isCurrentUser = true; }
+
+        // If the target user isn't the current user, determine whether they are a friend of the current user.
+        $isFriend = (!$isCurrentUser) ? $currentUser->isAFriend($targetUserID) : null;
+        // If the target user isn't the current user, determine whether they are a friend of a friend of the current user.
+        $isFriendOfFriend = (!$isCurrentUser) ? $currentUser->isAFriendOfAFriend($targetUserID) : null;
+
+        if ($targetUser = User::getFromRouteParameter($targetUserID)) {
+            $data['user'] = $targetUser;
+            $data['isCurrentUser'] = $isCurrentUser;
+            $data['photos'] = collect();
+
+            $photos = $targetUser->photoThumbnails();
+
+            if ($isFriend || $isCurrentUser) {
+                $data['photos'] = $photos->paginate(9);
+
+                return view('photos')->with('data', $data);
+            } else if ($isFriendOfFriend) {
+                foreach ($photos as $photo) {
+                    if ($photo->privacy->visibility === 'public' || $photo->privacy->visibility === 'friends-of-friends') {
+                        $data['photos']->push($photo);
+                    }
+                }
+
+                $data['photos'] = $data['photos']->paginate(9);
+
+                return view('photos')->with('data', $data);
+            } else {
+                foreach ($photos as $photo) {
+                    if ($photo->privacy->visibility === 'public') {
+                        $data['photos']->push($photo);
+                    }
+                }
+
+                $data['photos'] = $data['photos']->paginate(9);
+
+                return view('photos')->with('data', $data);
+            }
+
+            return view('photos')->with('data', $data);
         } else {
             return redirect()->route('home');
+        }
+    }
+
+    /**
+     * Display the specified Photo.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        $currentUser = User::find(Auth::user()->id);
+
+        // If the supplied ID corresponds to an existing photo in the photos DB table...
+        if ($photo = Photo::find($id)) {
+            $data['uploaderIsCurrentUser'] = ($currentUser->id === $photo->uploader_id) ? true : false;
+            $data['currentUser'] = $currentUser;
+            $data['photo'] = $photo;
+
+            return view('photo')->with('data', $data);
+        } else {
+            return redirect()->back()->with('Error', 'Photo could not be found.');
         }
     }
 
@@ -101,7 +166,8 @@ class PhotosController extends Controller
      * @return \Illuminate\Http\Response - The HTTP response that correlates to the success of uploading and storing the profile picture in the DB.
      */
     public function storeProfilePicture(Request $request) {
-        $currentUserID = Auth::user()->id;
+        $currentUser = User::find(Auth::user()->id);
+        $publicPrivacyTypeID = PrivacyType::where('visibility', 'public')->first()->id;
 
         $request->validate([
             'profile_picture' => 'required|mimes:jpg,jpeg,png|max:20000'
@@ -115,29 +181,34 @@ class PhotosController extends Controller
             $profilePicThumbnail = $this->createProfilePictureThumbnail($uploadedImage->basename);
 
             $uploadPhoto = new Photo();
-            $uploadPhoto->uploader_id = $currentUserID;
+            $uploadPhoto->uploader_id = $currentUser->id;
             $uploadPhoto->file_name = $uploadedImage->basename;
             //$uploadPhoto->caption = '';
             $uploadPhoto->type_id = 1; // Upload
             $uploadPhoto->time_uploaded = date('Y-m-d H:i:s');
+            $uploadPhoto->privacy_type_id = $publicPrivacyTypeID;
 
             $thumbnailPhoto = new Photo();
-            $thumbnailPhoto->uploader_id = $currentUserID;
+            $thumbnailPhoto->uploader_id = $currentUser->id;
             $thumbnailPhoto->file_name = $thumbnailImage->basename;
             $thumbnailPhoto->type_id = 3; // Thumbnail
             $thumbnailPhoto->time_uploaded = date('Y-m-d H:i:s');
+            $thumbnailPhoto->privacy_type_id = $publicPrivacyTypeID;
 
             $profilePicPhoto = new Photo();
-            $profilePicPhoto->uploader_id = $currentUserID;
+            $profilePicPhoto->uploader_id = $currentUser->id;
             $profilePicPhoto->file_name = $profilePic->basename;
             $profilePicPhoto->type_id = 5; // Active Profile Picture
             $profilePicPhoto->time_uploaded = date('Y-m-d H:i:s');
+            $profilePicPhoto->privacy_type_id = $publicPrivacyTypeID; // Profile Pics and Profile Pic thumbnails are always public.
 
             $profilePicThumbnailPhoto = new Photo();
-            $profilePicThumbnailPhoto->uploader_id = $currentUserID;
+            $profilePicThumbnailPhoto->uploader_id = $currentUser->id;
             $profilePicThumbnailPhoto->file_name = $profilePicThumbnail->basename;
             $profilePicThumbnailPhoto->type_id = 6; // Active Profile Picture Thumbnail
             $profilePicThumbnailPhoto->time_uploaded = date('Y-m-d H:i:s');
+            $profilePicThumbnailPhoto->privacy_type_id = $publicPrivacyTypeID; // Profile Pics and Profile Pic thumbnails are always public.
+
 
             try {
                 if ($uploadPhoto->save() && $thumbnailPhoto->save() && $profilePicPhoto->save() && $profilePicThumbnailPhoto->save()) {
@@ -145,13 +216,13 @@ class PhotosController extends Controller
                      * If a profile picture or profile picture thumbnail was previously set for the current user,
                      * update the photo type ID of the photos to a regular profile picture and profile picture thumbnail.
                      */
-                    $previouslyActiveProfilePics = Photo::deactivateProfilePicture($profilePicPhoto, $profilePicThumbnailPhoto, $currentUserID);
-                    $previousProfilePicChangedActivities = Activity::where('user1_id', '=', $currentUserID)
+                    $previouslyActiveProfilePics = Photo::deactivateProfilePicture($profilePicPhoto, $profilePicThumbnailPhoto, $currentUser->id);
+                    $previousProfilePicChangedActivities = Activity::where('user1_id', '=', $currentUser->id)
                         ->where('updated_profile_picture_photo_id', '!=', null)->get();
 
                     // Create Activity for Changed Profile Picture
                     $activity = new Activity();
-                    $activity->user1_id = $currentUserID;
+                    $activity->user1_id = $currentUser->id;
                     $activity->updated_profile_picture_photo_id = $profilePicPhoto->id;
                     $activity->created_at = date('Y-m-d H:i:s');
 
@@ -359,6 +430,49 @@ class PhotosController extends Controller
                     return redirect()->back()->with('not-updated', 'This Image is Already your Active Profile Picture');
                 }
             }
+        }
+    }
+
+    public function changePrivacy(Request $request) {
+        $currentUser = User::find(Auth::user()->id);
+
+        $request->validate([
+            'photo-id' => 'required|integer',
+            'privacy-type' => 'required|string|max:16777215'
+        ]);
+
+        $photoID = intval($request->input('photo-id'));
+        $privacyType = $request->input('privacy-type');
+        $validPrivacyTypes = PrivacyType::all()->pluck('visibility')->toArray();
+
+        // If the suppliled photo ID corresponds to a valid status in the DB...
+        if ($photo = Photo::find($photoID)) {
+            // If the supplied privacy type is a valid value and the current user is the user that uploaded the photo...
+            if (in_array($privacyType, $validPrivacyTypes) && $photo->uploader_id === $currentUser->id) {
+                $newPrivacyTypeID = PrivacyType::where('visibility', '=', $privacyType)->first()->id;
+
+                $photo->privacy_type_id = $newPrivacyTypeID;
+
+                /*
+                 * Update the privacy setting of the corresponding thumbnail image as well (All profile pictures and
+                 * profile picture thumbnails are public so these are ignored.
+                 */
+                if ($photoThumbnail = $photo->getAssociatedPhoto('thumbnail')) {
+                    $photoThumbnail->privacy_type_id = $newPrivacyTypeID;
+                } else {
+                    return redirect()->back()->with('error', 'An error occurred when updating the privacy of your photo.');
+                }
+
+                if ($photo->save() && $photoThumbnail->save()) {
+                    return redirect()->back()->with('success', 'Photo privacy updated.');
+                } else {
+                    return redirect()->back()->with('error', 'An error occurred when updating the privacy of your photo.');
+                }
+            } else {
+                return redirect()->back()->with('error', 'An error occurred when updating the privacy of your photo.');
+            }
+        } else {
+            return redirect()->back()->with('error', 'An error occurred when updating the privacy of your photo.');
         }
     }
 

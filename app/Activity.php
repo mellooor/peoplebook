@@ -45,7 +45,19 @@ class Activity extends Model
     }
 
     public function isNewRelationship() {
-        return ($this->new_relationship_id) ? $this->relationshipRequestAccepted() : null;
+        return ($this->new_relationship_id) ? $this->relationshipRequestAccepted : null;
+    }
+
+    public function isPhotoComment() {
+        return ($this->photo_comment_id) ? $this->relationshipRequestAccepted : null;
+    }
+
+    public function isPhotoLike() {
+        return ($this->photo_like_id) ? $this->relationshipRequestAccepted : null;
+    }
+
+    public function isPhotoCommentLike() {
+        return ($this->photo_comment_like_id) ? $this->relationshipRequestAccepted : null;
     }
 
     public function createdStatus() {
@@ -84,6 +96,18 @@ class Activity extends Model
         return $this->belongsTo('App\Relationship', 'new_relationship_id');
     }
 
+    public function photoComment() {
+        return $this->belongsTo('App\PhotoComment', 'photo_comment_id');
+    }
+
+    public function photoLike() {
+        return $this->belongsTo('App\PhotoLike', 'photo_like_id');
+    }
+
+    public function photoCommentLike() {
+        return $this->belongsTo('App\PhotoCommentLike', 'photo_comment_like_id');
+    }
+
     public static function removePreviousProfilePictureChangedActivities(Collection $previousProfilePicChangedActivities = null) {
         if ($previousProfilePicChangedActivities) {
             foreach ($previousProfilePicChangedActivities as $previousProfilePicChangedActivity) {
@@ -98,5 +122,32 @@ class Activity extends Model
      */
     public function createdAtDuration() {
         return PeopleBookDateTime::formatDuration($this->created_at);
+    }
+
+    /*
+     * Returns the privacy setting of the activity if it is an activity that is found on the news feed.
+     *
+     * @param int $targetUserID - The privacy of some activities is saved against the user so the target user ID is supplied to retrieve these.
+     *
+     * @return string - the privacy setting of the activity. Returns an empty string for activities that aren't found on the news feed.
+     */
+    public function getPrivacy(User $targetUser) {
+        if ($this->isCreatedStatus() || $this->isUploadedPhoto() || $this->isChangedProfilePicture() || $this->isNewFriendship() || $this->isNewRelationship()) {
+            if ($createdStatus = $this->isCreatedStatus()) {
+                return $createdStatus->privacy->visibility;
+            } elseif ($uploadedPhoto = $this->isUploadedPhoto()) {
+                return $uploadedPhoto->privacy->visibility;
+            } elseif ($changedProfilePicture = $this->isChangedProfilePicture()) {
+                return $changedProfilePicture->privacy->visibility;
+            } elseif ($newFriendship = $this->isNewFriendship()) {
+                return $targetUser->friendsPrivacy->visibility;
+            } elseif ($newRelationship = $this->isNewRelationship()) {
+                return $targetUser->relationshipPrivacy->visibility;
+            } else {
+                return '';
+            }
+        } else {
+            return '';
+        }
     }
 }

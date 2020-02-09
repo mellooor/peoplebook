@@ -29,6 +29,12 @@
                             @include('inc/relationship-request-notification-item', ['relationshipRequest' => $notification->activity->relationshipRequest])
                         @elseif ($notification->notificationType->type === 'relationship-request-accepted')
                                 @include('inc/relationship-request-accepted-notification-item', ['relationshipRequestAccepted' => $notification->activity->relationshipRequestAccepted])
+                        @elseif ($notification->notificationType->type === 'photo-commented')
+                            @include('inc/photo-commented-notification-item', ['photoComment' => $notification->activity->photoComment])
+                        @elseif ($notification->notificationType->type === 'photo-liked')
+                            @include('inc/photo-liked-notification-item', ['photoLike' => $notification->activity->photoLike])
+                        @elseif ($notification->notificationType->type === 'photo-comment-liked')
+                            @include('inc/photo-comment-liked-notification-item', ['photoCommentLike' => $notification->activity->photoCommentLike])
                         @endif
                     @endforeach
                 @else

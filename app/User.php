@@ -79,7 +79,7 @@ class User extends Authenticatable
     }
 
     public function photoThumbnails() {
-        return $this->hasMany('App\Photo', 'uploader_id')->where('type_id', 3);
+        return $this->hasMany('App\Photo', 'uploader_id')->where('type_id', 3)->get();
     }
 
     /*
@@ -155,6 +155,41 @@ class User extends Authenticatable
         } else {
             return null;
         }
+    }
+
+    public function defaultStatusPrivacy() {
+        return $this->belongsTo('App\PrivacyType', 'default_status_privacy_type_id');
+    }
+
+    public function defaultPhotoPrivacy() {
+        return $this->belongsTo('App\PrivacyType', 'default_photo_privacy_type_id');
+    }
+
+    public function friendsPrivacy() {
+        return $this->belongsTo('App\PrivacyType', 'friends_privacy_type_id');
+    }
+
+    public function dateOfBirthPrivacy() {
+        return $this->belongsTo('App\PrivacyType', 'date_of_birth_privacy_type_id');
+    }
+    public function homeTownPrivacy() {
+        return $this->belongsTo('App\PrivacyType', 'home_town_privacy_type_id');
+    }
+    public function currentTownPrivacy() {
+        return $this->belongsTo('App\PrivacyType', 'current_town_privacy_type_id');
+    }
+    public function schoolPrivacy() {
+        return $this->belongsTo('App\PrivacyType', 'school_privacy_type_id');
+    }
+    public function jobPrivacy() {
+        return $this->belongsTo('App\PrivacyType', 'job_privacy_type_id');
+    }
+    public function relationshipPrivacy() {
+        return $this->belongsTo('App\PrivacyType', 'relationship_privacy_type_id');
+    }
+
+    public function searchVisibilityPrivacy() {
+        return $this->belongsTo('App\PrivacyType', 'search_visibility_privacy_type_id');
     }
 
     /*
@@ -252,11 +287,11 @@ class User extends Authenticatable
     public function filterUsersFromCollection(Collection $usersCollection) {
         return $usersCollection->filter(function($user) {
             if (Self::isUserModel($user)) {
-                if ($user->privacy_type_id === 1) {
+                if ($user->searchVisibilityPrivacy->visibility === 'public') {
                     return $user;
-                } elseif ($user->privacy_type_id === 2) {
+                } elseif ($user->searchVisibilityPrivacy->visibility === 'friends-of-friends') {
                     return in_array($user->id, $this->friendAndFriendOfFriendIDs());
-                } elseif ($user->privacy_type_id === 3) {
+                } elseif ($user->searchVisibilityPrivacy->visibility === 'friends-only') {
                     return in_array($user->id, $this->getAllFriendIDs());
                 }
             } else {
@@ -282,11 +317,11 @@ class User extends Authenticatable
     public function filterStatusesFromCollection(Collection $statusesCollection) {
         return $statusesCollection->filter(function($status) {
             if (Status::isStatusModel($status)) {
-                if ($status->privacy_type_id === 1) {
+                if ($status->privacy->visibility === 'public') {
                     return $status;
-                } elseif ($status->privacy_type_id === 2) {
+                } elseif ($status->privacy->visibility === 'friends-of-friends') {
                     return in_array($status->author_id, $this->friendAndFriendOfFriendIDs());
-                } elseif ($status->privacy_type_id === 3) {
+                } elseif ($status->privacy->visibility === 'friends-only') {
                     return in_array($status->author_id, $this->getAllFriendIDs());
                 }
             } else {
@@ -355,5 +390,53 @@ class User extends Authenticatable
      */
     public function createdAtDuration() {
         return PeopleBookDateTime::formatDuration($this->date_created);
+    }
+
+    /*
+     * Determines whether the user is friends with another user.
+     *
+     * @param int $otherUserID - The ID of the user to check the friendship against.
+     *
+     * @return boolean - True/False depending on whether the user is friends with the other user or not.
+     */
+    public function isAFriend(int $otherUserID) {
+        // If the supplied user ID corresponds to a real user...
+        if ($otherUser = User::find($otherUserID)) {
+            $friendship = Friendship::where(function($q) use ($otherUser) {
+                $q->where('user1_id', '=', $this->id)
+                    ->where('user2_id', '=', $otherUser->id);
+            })->orWhere(function($q) use ($otherUser) {
+                $q->where('user1_id', '=', $otherUser->id)
+                    ->where('user2_id', '=', $this->id);
+            })->count();
+
+            if ($friendship === 0) {
+                return false;
+            } elseif ($friendship === 1) {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /*
+     * Determines wheter the user is a friend of a friend with another user.
+     *
+     * @param int $otherUserID - The ID of the user to check the friend of a friend relationship against.
+     *
+     * @return boolean - True/False depending on whether the user is a friend of a friend with the other user or not.
+     */
+    public function isAFriendOfAFriend(int $otherUserID) {
+        // If the supplied user ID corresponds to a real user...
+        if ($otherUser = User::find($otherUserID)) {
+            // Retrieve the friend of friend IDs array for the user.
+            $friendOfFriendIDsArray = $this->friendsOfFriendsIDs();
+
+            // Return the result of the verification that the otherUserID is in the friend of friend IDs array.
+            return in_array($otherUserID, $friendOfFriendIDsArray);
+        } else {
+            return false;
+        }
     }
 }

@@ -64,5 +64,16 @@ Route::post('/employer', 'CompaniesController@store')->name('add-employer')->mid
 Route::put('/my-profile/more-info/edit/relationship', 'UsersController@updateRelationship')->name('update-relationship')->middleware('auth');
 Route::post('/my-profile/more-info/edit/accept-relationship-request', 'RelationshipRequestsController@accept')->name('accept-relationship-request')->middleware('auth');
 Route::delete('/my-profile/more-info/edit/decline-relationship-request', 'RelationshipRequestsController@decline')->name('decline-relationship-request')->middleware('auth');
+Route::get('photo/{id}', 'PhotosController@show')->name('photo')->middleware('auth');
+Route::post('photo/like', 'PhotoLikesController@store')->name('like-photo')->middleware('auth');
+Route::delete('photo/unlike', 'PhotoLikesController@destroy')->name('unlike-photo')->middleware('auth');
+Route::post('photo/comment/add', 'PhotoCommentsController@store')->name('add-photo-comment')->middleware('auth');
+Route::put('photo/comment/edit', 'PhotoCommentsController@update')->name('update-photo-comment')->middleware('auth');
+Route::delete('photo/comment/delete', 'PhotoCommentsController@destroy')->name('delete-photo-comment')->middleware('auth');
+Route::post('photo/comment/like', 'PhotoCommentLikesController@store')->name('like-photo-comment')->middleware('auth');
+Route::delete('photo/comment/unlike', 'PhotoCommentLikesController@destroy')->name('unlike-photo-comment')->middleware('auth');
+Route::put('status/privacy', 'StatusesController@changePrivacy')->name('update-status-privacy')->middleware('auth');
+Route::put('photo/privacy', 'PhotosController@changePrivacy')->name('update-photo-privacy')->middleware('auth');
+Route::put('settings/privacy', 'SettingsController@updatePrivacy')->name('update-privacy-settings')->middleware('auth');
 
 Route::redirect('/home', '/');
